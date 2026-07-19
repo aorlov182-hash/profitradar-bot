@@ -1,13 +1,8 @@
-"""
-ProfitRadar MP — Подключение API WB.
-/connect — ввод ключа, валидация, шифрование, сохранение.
-/status — проверка тарифа и подключённого API.
-"""
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message
 from bot.db.database import get_session
 from bot.models.user import User
 from bot.services.wb_api import validate_wb_token
@@ -40,29 +35,27 @@ async def process_key(message: Message, state: FSMContext) -> None:
     if len(key) < 20:
         await message.answer("Ключ слишком короткий. Проверь и отправь снова:")
         return
-    
-    # Валидация через API WB
+
     await message.answer("⏳ Проверяю ключ...")
     is_valid, error = await validate_wb_token(key)
-    
+
     if not is_valid:
         await message.answer(f"❌ Ошибка: {error}\n\nПроверь ключ и напиши /connect ещё раз.")
         await state.clear()
         return
-    
-    # Шифруем и сохраняем
+
     encrypted = encrypt_token(key)
     user_id = message.from_user.id
-    
+
     async with get_session() as session:
         user = await session.get(User, user_id)
         if not user:
             user = User(id=user_id, username=message.from_user.username)
             session.add(user)
         user.wb_api_key_encrypted = encrypted
-        user.plan = "pro"  # Автоматически включаем Pro
+        user.plan = "pro"
         await session.commit()
-    
+
     await state.clear()
     await message.answer(
         "✅ <b>API WB подключён!</b>\n\n"
@@ -79,16 +72,16 @@ async def cmd_status(message: Message) -> None:
     user_id = message.from_user.id
     async with get_session() as session:
         user = await session.get(User, user_id)
-    
+
     if not user:
         await message.answer("Ты ещё не зарегистрирован. Напиши /start")
         return
-    
+
     plan = "Pro ✅" if user.plan == "pro" else "Free"
     wb = "Подключён ✅" if user.wb_api_key_encrypted else "Не подключён"
     digest = "Вкл ✅" if user.digest_enabled else "Выкл"
     alerts = "Вкл ✅" if user.alerts_enabled else "Выкл"
-    
+
     await message.answer(
         f"📈 <b>Твой статус</b>\n\n"
         f"Тариф: {plan}\n"

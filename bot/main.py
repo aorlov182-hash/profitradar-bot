@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from bot.config import settings
-from bot.handlers import start, calculator, api_connect, digest, alerts, subscription
+from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment
 from bot.middlewares.throttle import ThrottleMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
@@ -18,13 +18,14 @@ logger = logging.getLogger(__name__)
 def setup_routers(dp: Dispatcher) -> None:
     """Подключаем все роутеры."""
     dp.include_routers(
-        start.router,
-        calculator.router,
-        api_connect.router,
-        subscription.router,
-        digest.router,
-        alerts.router,
-    )
+    start.router,
+    calculator.router,
+    api_connect.router,
+    subscription.router,
+    payment.router,
+    digest.router,
+    alerts.router,
+)
 
 def setup_middlewares(dp: Dispatcher) -> None:
     """Подключаем middleware."""
