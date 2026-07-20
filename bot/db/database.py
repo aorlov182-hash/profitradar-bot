@@ -17,6 +17,11 @@ SessionLocal = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
 def init_db() -> None:
     """Синхронное создание таблиц."""
     from bot.models.user import User
+    from pathlib import Path
+    
+    # Создаём папку data, если её нет
+    Path("./data").mkdir(parents=True, exist_ok=True)
+    
     Base.metadata.create_all(bind=engine)
 
 class SyncToAsyncSession:
