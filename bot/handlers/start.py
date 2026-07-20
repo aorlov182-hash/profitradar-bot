@@ -1,6 +1,6 @@
 from aiogram import Router
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot.db.database import get_session
 from bot.models.user import User
 
@@ -11,6 +11,7 @@ async def cmd_start(message: Message) -> None:
     user_id = message.from_user.id
     username = message.from_user.username
 
+    # Сохраняем юзера в БД
     async with get_session() as session:
         user = await session.get(User, user_id)
         if not user:
@@ -20,15 +21,20 @@ async def cmd_start(message: Message) -> None:
             user.username = username
         await session.commit()
 
+    # Создаем кнопку со ссылкой на сайт
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🌐 Перейти на наш сайт", url="https://profitradar-landing.pages.dev")]
+        ]
+    )
+
     await message.answer(
         "Привет! Я ProfitRadar 📈\n\n"
         "Помогу быстро посчитать реальную маржу по твоим "
         "товарам на WB или Ozon. Без Excel, без регистрации.\n\n"
         "Просто скинь данные по товару и получишь "
-        "раскладку по всем расходам. Начнём?\n\n"
-        "📉 /calc — калькулятор маржи\n"
-        "📦 /pro — тарифы\n"
-        "❓ /help — все команды"
+        "раскладку по всем расходам. Начнём?",
+        reply_markup=keyboard
     )
 
 @router.message(Command("help"))

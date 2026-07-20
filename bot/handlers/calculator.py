@@ -1,10 +1,9 @@
 """
 ProfitRadar MP — FSM-калькулятор маржи.
 Пошаговый ввод данных: МП → категория → цена → себестоимость → вес.
-Также поддерживает быстрый ввод в одну строку.
 """
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
@@ -38,6 +37,11 @@ CANCEL_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+RECALC_KEYBOARD = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text="📊 Посчитать ещё")]],
+    resize_keyboard=True,
+)
+
 @router.message(Command("calc"))
 async def cmd_calc(message: Message, state: FSMContext) -> None:
     await state.clear()
@@ -59,16 +63,17 @@ async def process_marketplace(message: Message, state: FSMContext) -> None:
     await state.set_state(CalcStates.category)
 
 @router.message(CalcStates.marketplace, F.text == "❌ Отмена")
-async def cancel_calc(message: Message, state: FSMContext) -> None:
+async def cancel_calc_mp(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer("Калькулятор отменён. Напиши /calc чтобы начать заново.")
 
+@router.message(CalcStates.category, F.text == "❌ Отмена")
+async def cancel_calc_category(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("Калькулятор отменён.")
+
 @router.message(CalcStates.category)
 async def process_category(message: Message, state: FSMContext) -> None:
-    if message.text == "❌ Отмена":
-        await state.clear()
-        await message.answer("Калькулятор отменён.")
-        return
     await state.update_data(category=message.text.lower().strip())
     await message.answer(
         "Введи цену продажи (₽):",
@@ -76,12 +81,13 @@ async def process_category(message: Message, state: FSMContext) -> None:
     )
     await state.set_state(CalcStates.sell_price)
 
+@router.message(CalcStates.sell_price, F.text == "❌ Отмена")
+async def cancel_calc_sell(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("Калькулятор отменён.")
+
 @router.message(CalcStates.sell_price)
 async def process_sell_price(message: Message, state: FSMContext) -> None:
-    if message.text == "❌ Отмена":
-        await state.clear()
-        await message.answer("Калькулятор отменён.")
-        return
     try:
         price = float(message.text.replace(",", "."))
         if price <= 0:
@@ -93,12 +99,13 @@ async def process_sell_price(message: Message, state: FSMContext) -> None:
     await message.answer("Введи себестоимость (₽):")
     await state.set_state(CalcStates.cost_price)
 
+@router.message(CalcStates.cost_price, F.text == "❌ Отмена")
+async def cancel_calc_cost(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("Калькулятор отменён.")
+
 @router.message(CalcStates.cost_price)
 async def process_cost_price(message: Message, state: FSMContext) -> None:
-    if message.text == "❌ Отмена":
-        await state.clear()
-        await message.answer("Калькулятор отменён.")
-        return
     try:
         cost = float(message.text.replace(",", "."))
         if cost < 0:
@@ -107,15 +114,19 @@ async def process_cost_price(message: Message, state: FSMContext) -> None:
         await message.answer("Неверная себестоимость. Введи число >= 0:")
         return
     await state.update_data(cost_price=cost)
-    await message.answer("Введи вес товара в кг (например: 0.3):")
+    await message.answer(
+        "Введи вес товара в кг (например: 0.3):",
+        reply_markup=CANCEL_KEYBOARD,
+    )
     await state.set_state(CalcStates.weight)
+
+@router.message(CalcStates.weight, F.text == "❌ Отмена")
+async def cancel_calc_weight(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("Калькулятор отменён.")
 
 @router.message(CalcStates.weight)
 async def process_weight(message: Message, state: FSMContext) -> None:
-    if message.text == "❌ Отмена":
-        await state.clear()
-        await message.answer("Калькулятор отменён.")
-        return
     try:
         weight = float(message.text.replace(",", "."))
         if weight <= 0:
@@ -123,9 +134,10 @@ async def process_weight(message: Message, state: FSMContext) -> None:
     except ValueError:
         await message.answer("Неверный вес. Введи число больше 0:")
         return
-    
-    # Собираем данные
+
+    # Получаем данные из FSM state
     data = await state.get_data()
+    
     product = ProductInput(
         marketplace=Marketplace(data["marketplace"]),
         category=data["category"],
@@ -133,15 +145,16 @@ async def process_weight(message: Message, state: FSMContext) -> None:
         cost_price=data["cost_price"],
         weight_kg=weight,
     )
-    
+
     result = calculate_margin(product)
     text = format_result(result, product.marketplace)
-    
+
     await state.clear()
     await message.answer(
         text,
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="📊 Посчитать ещё")]],
-            resize_keyboard=True,
-        ),
+        reply_markup=RECALC_KEYBOARD,
     )
+
+@router.message(F.text == "📊 Посчитать ещё")
+async def recalc(message: Message, state: FSMContext) -> None:
+    await cmd_calc(message, state)

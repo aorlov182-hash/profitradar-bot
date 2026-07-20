@@ -168,15 +168,7 @@ def calc_returns_cost(product: ProductInput) -> float:
 
 def calculate_margin(product: ProductInput) -> MarginResult:
     """
-    Главная функция: расчёт чистой маржи.
-    Формула:
-    Чистая прибыль = Цена продажи
-                     - Себестоимость
-                     - Комиссия МП
-                     - Логистика
-                     - Хранение (за 1 ед. при среднем сроке)
-                     - Возвраты (средние на 1 продажу)
-                     - Налог
+    Главная функция: расчёт чистой маржи + точка безубыточности.
     """
     # Комиссия маркетплейса
     commission_rate = get_commission_rate(product.marketplace, product.category)
@@ -208,6 +200,16 @@ def calculate_margin(product: ProductInput) -> MarginResult:
     # Маржинальность
     margin_percent = (net_profit / product.sell_price * 100) if product.sell_price > 0 else 0
 
+    # Точка безубыточности (минимальная цена, при которой прибыль = 0)
+    # Формула: price = (cost + logistics + storage + returns) / (1 - commission_rate - tax_rate)
+    fixed_costs = product.cost_price + logistics + storage + returns_cost
+    variable_rates = commission_rate + product.tax_rate
+    breakeven_price = fixed_costs / (1 - variable_rates) if variable_rates < 1 else 0
+    
+    # Минимальная цена для маржи 20%
+    target_margin = 0.20
+    min_price_20 = fixed_costs / (1 - variable_rates - target_margin) if (1 - variable_rates - target_margin) > 0 else 0
+
     return MarginResult(
         sell_price=product.sell_price,
         cost_price=product.cost_price,
@@ -223,68 +225,44 @@ def calculate_margin(product: ProductInput) -> MarginResult:
             "return_rate": f"{get_return_rate(product.category)*100:.0f}%",
             "storage_days": AVG_STORAGE_DAYS,
             "tax_rate": f"{product.tax_rate*100:.0f}%",
+            "breakeven_price": round(breakeven_price, 2),
+            "min_price_20_margin": round(min_price_20, 2),
         }
     )
 
+ 
+
+
 
 def format_result(result: MarginResult, marketplace: Marketplace) -> str:
-    """
-    Форматировать результат для Telegram-сообщения.
-    """
+    """Форматировать результат для Telegram-сообщения."""
     mp_name = "Wildberries" if marketplace == Marketplace.WB else "Ozon"
+    
+    # Форматирование чисел с разделителями тысяч
+    def fmt_money(value):
+        return f"{value:,.0f} ₽".replace(",", " ")
+    
+    def fmt_money_decimal(value):
+        return f"{value:,.2f} ₽".replace(",", " ")
+
     warning = ""
     if result.margin_percent < 15:
-        warning = "\n⚠ Маржа тонкая! Любой скачок в возвратах или логистике может увести в минус."
+        warning = "\n⚠️ Маржа тонкая! Любой скачок в возвратах или логистике может увести в минус."
     if result.margin_percent < 0:
         warning = "\n🚨 Товар убыточный! Ты теряешь деньги на каждой продаже."
 
     return (
         f"📊 Раскладка по {mp_name}:\n\n"
-        f"💰 Цена продажи: {result.sell_price:.0f} ₽\n"
-        f" Себестоимость: -{result.cost_price:.0f} ₽\n"
-        f" Комиссия МП ({result.breakdown['commission_rate']}): -{result.commission:.0f} ₽\n"
-        f"🚚 Логистика: -{result.logistics:.0f} ₽\n"
-        f" Хранение (~{result.breakdown['storage_days']} дн.): -{result.storage:.0f} ₽\n"
-        f"🔄 Возвраты (~{result.breakdown['return_rate']}): -{result.returns_cost:.0f} ₽\n"
-        f"📝 Налог ({result.breakdown['tax_rate']}): -{result.tax:.0f} ₽\n\n"
-        f"{'✅' if result.net_profit >= 0 else '❌'} Чистая прибыль: {result.net_profit:.0f} ₽\n"
-        f"📈 Маржинальность: {result.margin_percent:.1f}%"
+        f"💰 Цена продажи: {fmt_money(result.sell_price)}\n"
+        f"🏭 Себестоимость: -{fmt_money(result.cost_price)}\n"
+        f"💼 Комиссия МП ({result.breakdown['commission_rate']}): -{fmt_money(result.commission)}\n"
+        f"🚚 Логистика: -{fmt_money(result.logistics)}\n"
+        f" Хранение (~{result.breakdown['storage_days']} дн.): -{fmt_money(result.storage)}\n"
+        f"🔄 Возвраты (~{result.breakdown['return_rate']}): -{fmt_money(result.returns_cost)}\n"
+        f"📝 Налог ({result.breakdown['tax_rate']}): -{fmt_money(result.tax)}\n\n"
+        f"{'✅' if result.net_profit >= 0 else '❌'} Чистая прибыль: {fmt_money_decimal(result.net_profit)}\n"
+        f"📈 Маржинальность: {result.margin_percent:.1f}%\n\n"
+        f"📌 Точка безубыточности: {fmt_money(result.breakdown['breakeven_price'])}\n"
+        f"🎯 Мин. цена для маржи 20%: {fmt_money(result.breakdown['min_price_20_margin'])}"
         f"{warning}"
     )
-
-
-# ============================================================
-# ПРИМЕР ИСПОЛЬЗОВАНИЯ
-# ============================================================
-
-if __name__ == "__main__":
-    # Пример: футболка на WB
-    product = ProductInput(
-        marketplace=Marketplace.WB,
-        category="одежда",
-        sell_price=2500,
-        cost_price=600,
-        weight_kg=0.3,
-        length_cm=30,
-        width_cm=20,
-        height_cm=3,
-        tax_rate=0.06,
-    )
-    result = calculate_margin(product)
-    print(format_result(result, product.marketplace))
-    print()
-
-    # Пример: наушники на Ozon
-    product2 = ProductInput(
-        marketplace=Marketplace.OZON,
-        category="электроника",
-        sell_price=4500,
-        cost_price=1800,
-        weight_kg=0.25,
-        length_cm=15,
-        width_cm=10,
-        height_cm=5,
-        tax_rate=0.06,
-    )
-    result2 = calculate_margin(product2)
-    print(format_result(result2, product2.marketplace))
