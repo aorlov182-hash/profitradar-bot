@@ -1,10 +1,10 @@
 """
 ProfitRadar MP — Управление подпиской Pro.
-/pro — информация о тарифах и активация.
+/pro — информация о тарифах и кнопка "Скоро будет".
 """
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 router = Router(name="subscription")
 
@@ -12,7 +12,7 @@ router = Router(name="subscription")
 async def cmd_pro(message: Message) -> None:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="💳 Купить Pro за 990 ₽", callback_data="pay_start")],
+            [InlineKeyboardButton(text="🔔 Напомнить о запуске", callback_data="notify_pro")],
         ]
     )
     
@@ -28,22 +28,18 @@ async def cmd_pro(message: Message) -> None:
         "• Алерты при падении маржи\n"
         "• Автозагрузка данных по всем SKU\n"
         "• Рекомендации по оптимизации\n\n"
-        "Нажмите кнопку ниже для покупки Pro:",
+        " <b>Pro тариф скоро будет доступен!</b>\n\n"
+        "Нажмите кнопку ниже, чтобы мы напомнили вам о запуске.",
         reply_markup=keyboard,
     )
 
-@router.callback_query(lambda c: c.data == "pay_start")
-async def callback_pay_start(callback: CallbackQuery) -> None:
-    """Перенаправление на команду /pay при нажатии кнопки в /pro."""
-    await callback.message.answer(
-        "💎 <b>Подписка Pro — 990 ₽/мес</b>\n\n"
-        "Что входит:\n"
-        "• API WB/Ozon (автоподключение)\n"
-        "• Ежедневный дайджест прибыли\n"
-        "• Алерты при падении маржи\n"
-        "• Автозагрузка данных по всем SKU\n"
-        "• Рекомендации по оптимизации\n\n"
-        "⚠️ <i>Это тестовый режим. Реальные деньги не списываются.</i>\n\n"
-        "Напишите /pay для оплаты.",
+@router.callback_query(lambda c: c.data == "notify_pro")
+async def callback_notify_pro(callback) -> None:
+    """Пользователь хочет быть уведомлен о запуске Pro."""
+    await callback.message.edit_text(
+        "✅ <b>Отлично!</b>\n\n"
+        "Мы записали вас в список ожидания.\n"
+        "Как только Pro тариф будет запущен, вы получите уведомление первым!\n\n"
+        "А пока пользуйтесь бесплатным калькулятором — он уже работает 📊",
     )
-    await callback.answer()
+    await callback.answer("Вы записаны в список ожидания!")

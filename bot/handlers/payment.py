@@ -1,90 +1,53 @@
 """
-ProfitRadar MP — Заглушка оплаты (тестовый режим).
-/pay — имитация покупки Pro тарифа.
+ProfitRadar MP — Заглушка оплаты (Pro скоро будет).
+/pay — показывает сообщение о скором запуске.
 """
-import asyncio
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from bot.db.database import get_session
-from bot.models.user import User
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 router = Router(name="payment")
 
-class PaymentStates(StatesGroup):
-    waiting_confirmation = State()
-
 @router.message(Command("pay"))
-async def cmd_pay(message: Message, state: FSMContext) -> None:
-    """Команда /pay — показывает кнопку оплаты."""
-    await state.clear()
-    
+async def cmd_pay(message: Message) -> None:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="💳 Оплатить 990 ₽", callback_data="pay_confirm")],
-            [InlineKeyboardButton(text="❌ Отмена", callback_data="pay_cancel")],
+            [InlineKeyboardButton(text="🔔 Напомнить о запуске", callback_data="notify_pro")],
+            [InlineKeyboardButton(text="📊 Попробовать калькулятор", callback_data="try_calc")],
         ]
     )
     
     await message.answer(
-        "💎 <b>Подписка Pro — 990 ₽/мес</b>\n\n"
-        "Что входит:\n"
+        " <b>Pro тариф скоро будет доступен!</b>\n\n"
+        "Мы активно работаем над подключением платежей.\n\n"
+        "Что входит в Pro:\n"
         "• API WB/Ozon (автоподключение)\n"
         "• Ежедневный дайджест прибыли\n"
         "• Алерты при падении маржи\n"
         "• Автозагрузка данных по всем SKU\n"
         "• Рекомендации по оптимизации\n\n"
-        "⚠️ <i>Это тестовый режим. Реальные деньги не списываются.</i>\n\n"
-        "Нажмите кнопку ниже для оплаты:",
+        "💰 Стоимость: <b>990 ₽/мес</b>\n\n"
+        "Нажмите кнопку, чтобы мы напомнили вам о запуске.\n"
+        "А пока попробуйте бесплатный калькулятор! 👇",
         reply_markup=keyboard,
     )
-    await state.set_state(PaymentStates.waiting_confirmation)
 
-@router.callback_query(F.data == "pay_confirm", PaymentStates.waiting_confirmation)
-async def process_payment(callback: CallbackQuery, state: FSMContext) -> None:
-    """Имитация процесса оплаты."""
+@router.callback_query(lambda c: c.data == "notify_pro")
+async def callback_notify_pro(callback) -> None:
+    """Пользователь хочет быть уведомлен о запуске Pro."""
     await callback.message.edit_text(
-        " <b>Обработка платежа...</b>\n\n"
-        "Пожалуйста, подождите 3 секунды.\n"
-        "🔄 Подключение к платёжному шлюзу...\n"
-        "🔄 Проверка карты...\n"
-        "🔄 Подтверждение транзакции..."
+        "✅ <b>Отлично!</b>\n\n"
+        "Мы записали вас в список ожидания.\n"
+        "Как только Pro тариф будет запущен, вы получите уведомление первым!\n\n"
+        "А пока пользуйтесь бесплатным калькулятором — он уже работает ",
     )
-    await callback.answer()
-    
-    # Имитация задержки обработки платежа (3 секунды)
-    await asyncio.sleep(3)
-    
-    # "Успешная оплата" — активируем Pro
-    user_id = callback.from_user.id
-    
-    async with get_session() as session:
-        user = await session.get(User, user_id)
-        if not user:
-            user = User(id=user_id, username=callback.from_user.username)
-            session.add(user)
-        user.plan = "pro"
-        await session.commit()
-    
-    await state.clear()
-    
-    await callback.message.edit_text(
-        "✅ <b>Оплата прошла успешно!</b>\n\n"
-        "🎉 Тариф Pro активирован.\n\n"
-        "Теперь вам доступны:\n"
-        "• Ежедневный дайджест прибыли\n"
-        "• Алерты при падении маржи\n"
-        "• Автозагрузка данных по всем SKU\n"
-        "• Рекомендации по оптимизации\n\n"
-        "Напишите /status чтобы проверить статус.\n"
-        "Напишите /connect чтобы подключить API WB."
-    )
+    await callback.answer("Вы записаны в список ожидания!")
 
-@router.callback_query(F.data == "pay_cancel", PaymentStates.waiting_confirmation)
-async def cancel_payment(callback: CallbackQuery, state: FSMContext) -> None:
-    """Отмена оплаты."""
-    await state.clear()
-    await callback.message.edit_text("❌ Оплата отменена.")
+@router.callback_query(lambda c: c.data == "try_calc")
+async def callback_try_calc(callback) -> None:
+    """Перенаправление на калькулятор."""
+    await callback.message.answer(
+        "📊 <b>Калькулятор маржи</b>\n\n"
+        "Напишите /calc, чтобы рассчитать маржу для вашего товара.",
+    )
     await callback.answer()
