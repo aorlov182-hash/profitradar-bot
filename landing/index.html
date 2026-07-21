@@ -6,81 +6,117 @@
     <title>ProfitRadar — Калькулятор маржи для Wildberries и Ozon</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1a1a2e; line-height: 1.6; }
-        .hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 100px 20px; text-align: center; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+        }
         .hero h1 { font-size: 48px; margin-bottom: 20px; font-weight: 800; }
         .hero p { font-size: 20px; margin-bottom: 40px; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .telegram-btn { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #0088cc 0%, #005f8f 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); transition: all 0.3s ease; }
-        .telegram-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 136, 204, 0.6); }
+        .telegram-btn {
+            display: inline-block;
+            padding: 18px 36px;
+            background: linear-gradient(135deg, #0088cc 0%, #005f8f 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+            transition: all 0.3s ease;
+        }
+        .telegram-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 136, 204, 0.6);
+        }
     </style>
 </head>
 <body>
+
+    <!-- ГЛАВНЫЙ ЭКРАН (HERO) -->
     <section class="hero">
         <h1>ProfitRadar 📈</h1>
         <p>Считайте реальную чистую маржу для Wildberries и Ozon за 10 секунд. Без Excel, без сложных таблиц, прямо в Telegram.</p>
-        <a href="https://t.me/profitradar_mp_bot" target="_blank" class="telegram-btn">🚀 Запустить бота бесплатно</a>
+        <a href="https://t.me/profitradar_mp_bot" target="_blank" class="telegram-btn">
+            🚀 Запустить бота бесплатно
+        </a>
     </section>
 
+    <!-- СЕКЦИЯ: Как это работает -->
     <section style="padding: 80px 0; background: #f8f9fa;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
             <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px; color: #1a1a2e;">Как это работает</h2>
+            
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+                <!-- Шаг 1 -->
                 <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
                     <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">1</div>
                     <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Запустите бота</h3>
-                    <p style="color: #666;">Нажмите кнопку выше, чтобы открыть Telegram-бота. Это бесплатно и не требует регистрации.</p>
+                    <p style="color: #666; line-height: 1.6;">Нажмите кнопку выше, чтобы открыть Telegram-бота. Это бесплатно и не требует регистрации.</p>
                 </div>
+                
+                <!-- Шаг 2 -->
                 <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
                     <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">2</div>
                     <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Введите данные товара</h3>
-                    <p style="color: #666;">Укажите категорию, цену продажи, себестоимость и вес. Бот сам посчитает все расходы.</p>
+                    <p style="color: #666; line-height: 1.6;">Укажите категорию, цену продажи, себестоимость и вес. Бот сам посчитает все расходы.</p>
                 </div>
+                
+                <!-- Шаг 3 -->
                 <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
                     <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">3</div>
                     <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Получите расчёт</h3>
-                    <p style="color: #666;">Узнайте чистую прибыль, маржинальность и точку безубыточности за 10 секунд.</p>
+                    <p style="color: #666; line-height: 1.6;">Узнайте чистую прибыль, маржинальность и точку безубыточности за 10 секунд.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- СЕКЦИЯ: Что умеет бот -->
     <section style="padding: 80px 0; background: white;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
             <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px; color: #1a1a2e;">Что умеет бот</h2>
+            
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px;">
+                <!-- Функция 1 -->
                 <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <div style="font-size: 40px;">📊</div>
-                    <div><h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Калькулятор маржи</h3><p style="color: #666;">Мгновенный расчёт чистой прибыли с учётом комиссии, логистики, хранения, возвратов и налогов.</p></div>
+                    <div style="font-size: 40px; flex-shrink: 0;"></div>
+                    <div>
+                        <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Калькулятор маржи</h3>
+                        <p style="color: #666; line-height: 1.6;">Мгновенный расчёт чистой прибыли с учётом комиссии, логистики, хранения, возвратов и налогов.</p>
+                    </div>
                 </div>
+                
+                <!-- Функция 2 -->
                 <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <div style="font-size: 40px;">⚖️</div>
-                    <div><h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Сравнение WB и Ozon</h3><p style="color: #666;">Сравните, где выгоднее продавать один и тот же товар. Увидите разницу в прибыли.</p></div>
+                    <div style="font-size: 40px; flex-shrink: 0;">️</div>
+                    <div>
+                        <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Сравнение WB и Ozon</h3>
+                        <p style="color: #666; line-height: 1.6;">Сравните, где выгоднее продавать один и тот же товар. Увидите разницу в прибыли.</p>
+                    </div>
                 </div>
+                
+                <!-- Функция 3 -->
                 <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <div style="font-size: 40px;">📈</div>
-                    <div><h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Точка безубыточности</h3><p style="color: #666;">Узнайте минимальную цену продажи, чтобы не уйти в минус, и цену для маржи 20%.</p></div>
+                    <div style="font-size: 40px; flex-shrink: 0;"></div>
+                    <div>
+                        <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Точка безубыточности</h3>
+                        <p style="color: #666; line-height: 1.6;">Узнайте минимальную цену продажи, чтобы не уйти в минус, и цену для маржи 20%.</p>
+                    </div>
                 </div>
+                
+                <!-- Функция 4 -->
                 <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <div style="font-size: 40px;">🔔</div>
-                    <div><h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Pro-функции (скоро)</h3><p style="color: #666;">API WB/Ozon, ежедневные дайджесты прибыли, алерты при падении маржи.</p></div>
+                    <div style="font-size: 40px; flex-shrink: 0;">🔔</div>
+                    <div>
+                        <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Pro-функции (скоро)</h3>
+                        <p style="color: #666; line-height: 1.6;">API WB/Ozon, ежедневные дайджесты прибыли, алерты при падении маржи.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section style="padding: 80px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-        <div style="max-width: 1000px; margin: 0 auto; padding: 0 20px;">
-            <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px;">Команды бота</h2>
-            <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 40px; backdrop-filter: blur(10px);">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                    <div style="padding: 15px;"><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/start</code><p style="margin: 0; font-size: 14px;">Запуск бота</p></div>
-                    <div style="padding: 15px;"><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/calc</code><p style="margin: 0; font-size: 14px;">Калькулятор маржи</p></div>
-                    <div style="padding: 15px;"><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/compare</code><p style="margin: 0; font-size: 14px;">Сравнить WB и Ozon</p></div>
-                    <div style="padding: 15px;"><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/pro</code><p style="margin: 0; font-size: 14px;">Тарифы Pro</p></div>
-                    <div style="padding: 15px;"><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/help</code><p style="margin: 0; font-size: 14px;">Помощь</p></div>
-                </div>
-            </div>
-        </div>
-    </section>
-</body>
-</html>
