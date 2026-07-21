@@ -1,10 +1,13 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 from contextlib import asynccontextmanager
 import asyncio
+from pathlib import Path
+
 
 class Base(DeclarativeBase):
     pass
+
 
 engine = create_engine(
     "sqlite:///./data/bot.db",
@@ -14,15 +17,31 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
 
+
 def init_db() -> None:
     """Синхронное создание таблиц."""
     from bot.models.user import User
-    from pathlib import Path
     
     # Создаём папку data, если её нет
     Path("./data").mkdir(parents=True, exist_ok=True)
     
+    # Создаём таблицы моделей (users)
     Base.metadata.create_all(bind=engine)
+    
+    # Создаём таблицу статистики вручную
+    conn = engine.raw_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 
 class SyncToAsyncSession:
     """Обёртка, позволяющая использовать await с синхронной сессией."""
@@ -40,6 +59,7 @@ class SyncToAsyncSession:
 
     async def close(self):
         await asyncio.to_thread(self._sync_session.close)
+
 
 @asynccontextmanager
 async def get_session():

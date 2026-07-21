@@ -8,33 +8,40 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from bot.config import settings
-from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment
+from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment, admin
 from bot.middlewares.throttle import ThrottleMiddleware
+from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
 
 logger = logging.getLogger(__name__)
 
+
 def setup_routers(dp: Dispatcher) -> None:
     """Подключаем все роутеры."""
     dp.include_routers(
-    start.router,
-    calculator.router,
-    api_connect.router,
-    subscription.router,
-    payment.router,
-    digest.router,
-    alerts.router,
-)
+        start.router,
+        calculator.router,
+        api_connect.router,
+        subscription.router,
+        payment.router,
+        admin.router,
+        digest.router,
+        alerts.router,
+    )
+
 
 def setup_middlewares(dp: Dispatcher) -> None:
     """Подключаем middleware."""
     dp.message.middleware(ThrottleMiddleware(rate_limit=1.0))
+    dp.message.middleware(AnalyticsMiddleware())
+    dp.callback_query.middleware(AnalyticsMiddleware())
+
 
 async def on_startup(bot: Bot) -> None:
     """Действия при старте."""
     logger.info("Bot starting...")
-    init_db()  # Убрали await
+    init_db()
     logger.info("Database initialized")
     # Уведомление админу
     try:
@@ -45,16 +52,18 @@ async def on_startup(bot: Bot) -> None:
     except Exception:
         pass
 
+
 async def on_shutdown(bot: Bot) -> None:
     """Действия при остановке."""
     logger.info("Bot shutting down...")
     try:
         await bot.send_message(
             chat_id=settings.admin_user_id,
-            text="⚠ Бот остановлен"
+            text=" Бот остановлен"
         )
     except Exception:
         pass
+
 
 async def main() -> None:
     """Главная функция."""
@@ -89,6 +98,7 @@ async def main() -> None:
     finally:
         scheduler.shutdown(wait=False)
         await bot.session.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
