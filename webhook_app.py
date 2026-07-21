@@ -8,8 +8,9 @@ from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from bot.config import settings
-from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment
+from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment, admin
 from bot.middlewares.throttle import ThrottleMiddleware
+from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
 
@@ -22,8 +23,14 @@ PORT = int(os.getenv("PORT", 10000))
 
 def setup_routers(dp: Dispatcher) -> None:
     dp.include_routers(
-        start.router, calculator.router, api_connect.router,
-        subscription.router, payment.router, digest.router, alerts.router,
+        start.router,
+        calculator.router,
+        api_connect.router,
+        subscription.router,
+        payment.router,
+        admin.router,  # <-- ДОБАВЛЕНО
+        digest.router,
+        alerts.router,
     )
 
 async def on_startup(bot: Bot) -> None:
@@ -48,7 +55,11 @@ async def main():
     dp.shutdown.register(on_shutdown)
     
     setup_routers(dp)
+    
+    # Подключаем middleware (ДОБАВЛЕНО)
     dp.message.middleware(ThrottleMiddleware(rate_limit=1.0))
+    dp.message.middleware(AnalyticsMiddleware())
+    dp.callback_query.middleware(AnalyticsMiddleware())
 
     app = web.Application()
     
@@ -64,7 +75,6 @@ async def main():
     
     logger.info(f"Server started on port {PORT}")
     
-    # Бесконечный цикл, чтобы сервер не завершался
     try:
         while True:
             await asyncio.sleep(3600)
