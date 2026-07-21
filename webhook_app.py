@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from bot.config import settings
-from bot.handlers import start, calculator, api_connect, digest, alerts, subscription, payment, admin
+from bot.handlers import start, calculator, compare, api_connect, digest, alerts, subscription, payment, admin
 from bot.middlewares.throttle import ThrottleMiddleware
 from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
@@ -25,10 +25,11 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_routers(
         start.router,
         calculator.router,
+        compare.router,       # <-- ДОБАВЛЕНО
         api_connect.router,
         subscription.router,
         payment.router,
-        admin.router,  # <-- ДОБАВЛЕНО
+        admin.router,
         digest.router,
         alerts.router,
     )
@@ -56,7 +57,6 @@ async def main():
     
     setup_routers(dp)
     
-    # Подключаем middleware (ДОБАВЛЕНО)
     dp.message.middleware(ThrottleMiddleware(rate_limit=1.0))
     dp.message.middleware(AnalyticsMiddleware())
     dp.callback_query.middleware(AnalyticsMiddleware())
