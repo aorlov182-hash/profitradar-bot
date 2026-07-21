@@ -54,6 +54,12 @@ class SyncToAsyncSession:
     def add(self, instance):
         self._sync_session.add(instance)
 
+    async def execute(self, statement, params=None):
+        """Выполняет SQL-запрос (например, select) в отдельном потоке."""
+        def _run_execute():
+            return self._sync_session.execute(statement, params)
+        return await asyncio.to_thread(_run_execute)
+
     async def commit(self):
         await asyncio.to_thread(self._sync_session.commit)
 
