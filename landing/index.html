@@ -1,938 +1,113 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProfitRadar MP — Телеграм-бот для расчёта маржи на WB и Ozon</title>
-    <meta name="description" content="ProfitRadar MP — Telegram-бот, который показывает реальную прибыль после всех комиссий, логистики и возвратов. Без Excel, без догадок.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --accent: #f25c2b;
-            --accent-hover: #d94d1f;
-            --telegram: #0088cc;
-            --bg-light: #f0edee;
-            --bg-pink: #fff4ef;
-            --text: #111;
-            --text-muted: #666;
-            --border: #e5e5e5;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            background: #fff;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* ========== TOP BAR ========== */
-        .topbar {
-            background: #0a0a0a;
-            padding: 14px 0;
-            text-align: center;
-        }
-
-        .topbar-text {
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-
-        /* ========== HERO ========== */
-        .hero {
-            padding: 120px 0 100px;
-            background: #fff;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(255, 244, 239, 0.9) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -150px;
-            left: -150px;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255, 244, 239, 0.7) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .hero .container {
-            position: relative;
-            z-index: 1;
-            max-width: 900px;
-        }
-
-        .hero h1 {
-            font-size: clamp(40px, 6vw, 72px);
-            font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -0.02em;
-            margin-bottom: 32px;
-            max-width: 700px;
-            color: var(--accent);
-        }
-
-        .hero p {
-            font-size: 20px;
-            line-height: 1.6;
-            color: var(--text-muted);
-            max-width: 600px;
-        }
-
-        /* ========== STATS ========== */
-        .stats {
-            padding: 100px 0;
-            background: var(--bg-light);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-        }
-
-        .stats-text h2 {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 24px;
-        }
-
-        .stats-text p {
-            font-size: 17px;
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-
-        .stats-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .bar-row {
-            background: #fff;
-            border-radius: 12px;
-            padding: 16px 20px;
-            display: grid;
-            grid-template-columns: 120px 1fr 50px;
-            align-items: center;
-            gap: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
-
-        .bar-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .bar-track {
-            height: 8px;
-            background: #e5e5e5;
-            border-radius: 100px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 100px;
-        }
-
-        .bar-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--accent);
-            text-align: right;
-        }
-
-        /* ========== FEATURES ========== */
-        .features {
-            padding: 100px 0;
-            background: #fff;
-        }
-
-        .section-label {
-            display: inline-block;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-        }
-
-        .section-subtitle {
-            font-size: 18px;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin-bottom: 60px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .feature-card {
-            padding: 32px;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            background: #fff;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--bg-pink);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            margin-bottom: 20px;
-            color: var(--accent);
-        }
-
-        .feature-card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .feature-card p {
-            font-size: 15px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        /* ========== HOW IT WORKS ========== */
-        .how-it-works {
-            padding: 100px 0;
-            background: #0a0a0a;
-            color: #fff;
-        }
-
-        .how-it-works .section-label {
-            color: var(--accent);
-        }
-
-        .how-it-works .section-title {
-            color: #fff;
-            margin-bottom: 60px;
-        }
-
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-        }
-
-        .step {
-            padding-top: 20px;
-        }
-
-        .step-number {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--accent);
-            margin-bottom: 20px;
-            line-height: 1;
-        }
-
-        .step h3 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .step p {
-            font-size: 15px;
-            color: #999;
-            line-height: 1.6;
-        }
-
-        /* ========== TESTIMONIALS ========== */
-        .testimonials {
-            padding: 100px 0;
-            background: #fff;
-        }
-
-        .testimonials .section-title {
-            margin-bottom: 40px;
-        }
-
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .testimonial-card {
-            padding: 32px;
-            background: var(--bg-light);
-            border-radius: 16px;
-        }
-
-        .testimonial-quote {
-            font-size: 17px;
-            line-height: 1.6;
-            font-style: italic;
-            margin-bottom: 24px;
-            color: var(--text);
-        }
-
-        .testimonial-author {
-            font-size: 14px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* ========== CTA ========== */
-        .cta {
-            padding: 100px 0;
-            background: var(--bg-pink);
-            text-align: center;
-        }
-
-        .cta .container {
-            max-width: 700px;
-        }
-
-        .cta h2 {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-        }
-
-        .cta p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .cta-telegram-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 32px;
-            background: var(--telegram);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 32px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.3);
-        }
-
-        .cta-telegram-link:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 136, 204, 0.4);
-        }
-
-        .cta-telegram-link::before {
-            content: '';
-            width: 28px;
-            height: 28px;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>') no-repeat center;
-            background-size: contain;
-        }
-
-        .cta-hint {
-            margin-top: 24px;
-            font-size: 14px;
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-
-        .cta-hint code {
-            background: rgba(0, 136, 204, 0.1);
-            color: var(--telegram);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        /* ========== PRICING ========== */
-        .pricing {
-            padding: 100px 0;
-            background: #f5f5f7;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .pricing .section-number {
-            position: absolute;
-            top: 40px;
-            right: 60px;
-            font-size: 180px;
-            font-weight: 900;
-            color: rgba(0, 0, 0, 0.04);
-            line-height: 1;
-            pointer-events: none;
-            user-select: none;
-        }
-
-        .pricing .section-title {
-            margin-bottom: 60px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .pricing-card {
-            padding: 48px 40px;
-            border-radius: 20px;
-            min-height: 420px;
-        }
-
-        .pricing-card.free {
-            background: #1a1a1a;
-            color: #fff;
-        }
-
-        .pricing-card.pro {
-            background: var(--accent);
-            color: #fff;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .pricing-card.pro:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(242, 92, 43, 0.3);
-        }
-
-        .pricing-card.pro::after {
-            content: 'Оплатить →';
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            right: 40px;
-            text-align: center;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-        }
-
-        .pricing-card.pro:hover::after {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .pricing-label {
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            opacity: 0.7;
-            margin-bottom: 16px;
-        }
-
-        .pricing-price {
-            font-size: 56px;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 32px;
-            letter-spacing: -0.02em;
-        }
-
-        .pricing-price span {
-            font-size: 32px;
-            font-weight: 600;
-        }
-
-        .pricing-features {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .pricing-features li {
-            font-size: 16px;
-            line-height: 1.5;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .pricing-features li::before {
-            content: '✓';
-            font-weight: 700;
-            flex-shrink: 0;
-            opacity: 0.9;
-        }
-
-        /* ========== FAQ ========== */
-        .faq {
-            padding: 100px 0;
-            background: #fff;
-        }
-
-        .faq .container {
-            max-width: 800px;
-        }
-
-        .faq .section-title {
-            margin-bottom: 40px;
-        }
-
-        .faq-list {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .faq-item {
-            border-bottom: 1px solid var(--border);
-        }
-
-        .faq-question {
-            width: 100%;
-            padding: 24px 0;
-            background: none;
-            border: none;
-            text-align: left;
-            font-size: 17px;
-            font-weight: 600;
-            font-family: inherit;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: color 0.2s ease;
-        }
-
-        .faq-question:hover {
-            color: var(--accent);
-        }
-
-        .faq-toggle {
-            font-size: 22px;
-            font-weight: 300;
-            color: var(--text-muted);
-            transition: transform 0.3s ease;
-            flex-shrink: 0;
-            margin-left: 16px;
-        }
-
-        .faq-item.active .faq-toggle {
-            transform: rotate(45deg);
-        }
-
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-        }
-
-        .faq-item.active .faq-answer {
-            max-height: 300px;
-            padding-bottom: 24px;
-        }
-
-        .faq-answer p {
-            font-size: 16px;
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-
-        /* ========== FOOTER ========== */
-        footer {
-            padding: 40px 0;
-            background: #fff;
-            text-align: center;
-            font-size: 14px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
-        }
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 900px) {
-            .stats-grid,
-            .features-grid,
-            .testimonials-grid,
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .steps-grid {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-
-            .hero {
-                padding: 80px 0 60px;
-            }
-
-            .stats, .features, .how-it-works, .testimonials, .cta, .pricing, .faq {
-                padding: 70px 0;
-            }
-
-            .pricing .section-number {
-                font-size: 120px;
-                top: 20px;
-                right: 20px;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .bar-row {
-                grid-template-columns: 90px 1fr 45px;
-                gap: 12px;
-                padding: 12px 14px;
-            }
-
-            .bar-label {
-                font-size: 12px;
-            }
-
-            .pricing-card {
-                padding: 32px 24px;
-                min-height: auto;
-            }
-
-            .pricing-price {
-                font-size: 44px;
-            }
-
-            .pricing-card.pro::after {
-                bottom: 24px;
-                left: 24px;
-                right: 24px;
-            }
-
-            .cta-telegram-link {
-                padding: 16px 24px;
-                font-size: 16px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- TOP BAR -->
-    <div class="topbar">
-        <span class="topbar-text">ProfitRadar MP</span>
+<!-- СЕКЦИЯ: Как это работает -->
+<section style="padding: 80px 0; background: #f8f9fa;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px; color: #1a1a2e;">Как это работает</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+            <!-- Шаг 1 -->
+            <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">1</div>
+                <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Запустите бота</h3>
+                <p style="color: #666; line-height: 1.6;">Нажмите кнопку ниже, чтобы открыть Telegram-бота. Это бесплатно и не требует регистрации.</p>
+            </div>
+            
+            <!-- Шаг 2 -->
+            <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">2</div>
+                <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Введите данные товара</h3>
+                <p style="color: #666; line-height: 1.6;">Укажите категорию, цену продажи, себестоимость и вес. Бот сам посчитает все расходы.</p>
+            </div>
+            
+            <!-- Шаг 3 -->
+            <div style="text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; font-weight: bold;">3</div>
+                <h3 style="font-size: 24px; margin-bottom: 15px; color: #1a1a2e;">Получите расчёт</h3>
+                <p style="color: #666; line-height: 1.6;">Узнайте чистую прибыль, маржинальность и точку безубыточности за 10 секунд.</p>
+            </div>
+        </div>
     </div>
+</section>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="container">
-            <h1>Ты продаёшь на маркетплейсе, но не знаешь свою реальную прибыль?</h1>
-            <p>ProfitRadar MP — это Telegram-бот, который показывает, сколько ты зарабатываешь на каждой единице товара после всех комиссий, логистики и возвратов. Без Excel, без догадок.</p>
-        </div>
-    </section>
-
-    <!-- STATS -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stats-text">
-                    <h2>67% селлеров не знают свою реальную маржинальность</h2>
-                    <p>Комиссии WB и Ozon меняются каждый месяц. Логистика, хранение, возвраты, штрафы съедают прибыль незаметно. Ты видишь оборот в личном кабинете и думаешь, что всё ок. А потом смотришь на расчётный счёт и не понимаешь, куда делись деньги.</p>
+<!-- СЕКЦИЯ: Что умеет бот -->
+<section style="padding: 80px 0; background: white;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px; color: #1a1a2e;">Что умеет бот</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px;">
+            <!-- Функция 1 -->
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="font-size: 40px; flex-shrink: 0;">📊</div>
+                <div>
+                    <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Калькулятор маржи</h3>
+                    <p style="color: #666; line-height: 1.6;">Мгновенный расчёт чистой прибыли с учётом комиссии, логистики, хранения, возвратов и налогов.</p>
                 </div>
-                <div class="stats-bars">
-                    <div class="bar-row">
-                        <div class="bar-label">Комиссия МП</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 75%"></div></div>
-                        <div class="bar-value">15%</div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Логистика</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 60%"></div></div>
-                        <div class="bar-value">12%</div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Хранение</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 35%"></div></div>
-                        <div class="bar-value">7%</div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Возвраты</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 45%"></div></div>
-                        <div class="bar-value">9%</div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Штрафы</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 15%"></div></div>
-                        <div class="bar-value">3%</div>
-                    </div>
+            </div>
+            
+            <!-- Функция 2 -->
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="font-size: 40px; flex-shrink: 0;">⚖️</div>
+                <div>
+                    <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Сравнение WB и Ozon</h3>
+                    <p style="color: #666; line-height: 1.6;">Сравните, где выгоднее продавать один и тот же товар. Увидите разницу в прибыли.</p>
+                </div>
+            </div>
+            
+            <!-- Функция 3 -->
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="font-size: 40px; flex-shrink: 0;">📈</div>
+                <div>
+                    <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Точка безубыточности</h3>
+                    <p style="color: #666; line-height: 1.6;">Узнайте минимальную цену продажи, чтобы не уйти в минус, и цену для маржи 20%.</p>
+                </div>
+            </div>
+            
+            <!-- Функция 4 -->
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="font-size: 40px; flex-shrink: 0;">🔔</div>
+                <div>
+                    <h3 style="font-size: 20px; margin-bottom: 10px; color: #1a1a2e;">Pro-функции (скоро)</h3>
+                    <p style="color: #666; line-height: 1.6;">API WB/Ozon, ежедневные дайджесты прибыли, алерты при падении маржи.</p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- FEATURES -->
-    <section class="features">
-        <div class="container">
-            <div class="section-label">Решение</div>
-            <h2 class="section-title">Контроль прибыли в одном экране</h2>
-            <p class="section-subtitle">Калькулятор юнит-экономики, который учитывает все скрытые расходы маркетплейсов. Видишь реальную картину по каждому SKU.</p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Реальная маржа, а не выручка</h3>
-                    <p>Считаем чистую прибыль после всех комиссий, логистики и возвратов</p>
+<!-- СЕКЦИЯ: Команды бота -->
+<section style="padding: 80px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div style="max-width: 1000px; margin: 0 auto; padding: 0 20px;">
+        <h2 style="text-align: center; font-size: 36px; margin-bottom: 50px;">Команды бота</h2>
+        
+        <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 40px; backdrop-filter: blur(10px);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/start</code>
+                    <p style="margin: 0; font-size: 14px;">Запуск бота</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Обновление за минуты</h3>
-                    <p>Подключаешь кабинет, данные подтягиваются автоматически</p>
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/calc</code>
+                    <p style="margin: 0; font-size: 14px;">Калькулятор маржи</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Рекомендации по каждому SKU</h3>
-                    <p>Не просто цифры, а конкретные действия для роста прибыли</p>
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/compare</code>
+                    <p style="margin: 0; font-size: 14px;">Сравнить WB и Ozon</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔔</div>
-                    <h3>Алерты при падении маржи</h3>
-                    <p>Узнаёшь о проблеме до того, как она съест бюджет</p>
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/pro</code>
+                    <p style="margin: 0; font-size: 14px;">Тарифы Pro</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- HOW IT WORKS -->
-    <section class="how-it-works">
-        <div class="container">
-            <div class="section-label">Как это работает</div>
-            <h2 class="section-title">Три шага до контроля</h2>
-
-            <div class="steps-grid">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Подключи кабинет</h3>
-                    <p>Авторизуйся через API WB или Ozon. Это занимает 2 минуты, доступ только на чтение.</p>
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/help</code>
+                    <p style="margin: 0; font-size: 14px;">Помощь</p>
                 </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Получи расчёт</h3>
-                    <p>Система разложит каждый заказ на расходы и покажет чистую прибыль по каждому SKU.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Действуй</h3>
-                    <p>Следуй рекомендациям: убери убыточные позиции, подними цены, оптимизируй логистику.</p>
+                <div style="padding: 15px;">
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; display: inline-block; margin-bottom: 10px;">/stats</code>
+                    <p style="margin: 0; font-size: 14px;">Статистика (админ)</p>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- TESTIMONIALS -->
-    <section class="testimonials">
-        <div class="container">
-            <h2 class="section-title">Селлеры уже считают</h2>
-
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">«Я думал, у меня маржа 25%. ProfitRadar показал 9%. Убрал три убыточных SKU и вышел на 18% за месяц.»</p>
-                    <div class="testimonial-author">Селлер WB, одежда, 150+ SKU</div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">«Наконец вижу, сколько реально стоит каждый возврат. Раньше даже не считал.»</p>
-                    <div class="testimonial-author">Селлер Ozon, электроника</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="cta">
-        <div class="container">
-            <h2>Узнай свою реальную маржу сегодня</h2>
-            <p>Бесплатный расчёт по твоим данным. Без обязательств, без карты.</p>
-
-            <a href="https://t.me/profitradar_mp_bot" class="cta-telegram-link" target="_blank">
-                Открыть @profitradar_mp_bot
-            </a>
-
-            <p class="cta-hint">в боте просто введи <code>/calc</code> и получишь моментальный расчёт</p>
-        </div>
-    </section>
-
-    <!-- PRICING -->
-    <section class="pricing">
-        <div class="section-number">03</div>
-        <div class="container">
-            <h2 class="section-title">Тарифы</h2>
-
-            <div class="pricing-grid">
-                <div class="pricing-card free">
-                    <div class="pricing-label">Free</div>
-                    <div class="pricing-price">0 ₽</div>
-                    <ul class="pricing-features">
-                        <li>Калькулятор маржи (ручной ввод)</li>
-                        <li>Без лимитов на расчёты</li>
-                        <li>Без регистрации</li>
-                        <li>Актуальные тарифы WB/Ozon</li>
-                    </ul>
-                </div>
-
-                <a href="https://yookassa.ru/..." class="pricing-card pro" target="_blank">
-                    <div class="pricing-label">Pro</div>
-                    <div class="pricing-price">990 <span>₽/мес</span></div>
-                    <ul class="pricing-features">
-                        <li>API WB + Ozon (read-only)</li>
-                        <li>Автоматический расчёт всех SKU</li>
-                        <li>Ежедневный дайджест прибыли</li>
-                        <li>Алерты при падении маржи</li>
-                        <li>Аналитика топ/антитоп</li>
-                    </ul>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="faq">
-        <div class="container">
-            <h2 class="section-title">Частые вопросы</h2>
-
-            <div class="faq-list">
-                <div class="faq-item">
-                    <button class="faq-question">
-                        Это бесплатно?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Базовый расчёт бесплатный. Подписка нужна для автообновления данных и алертов.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <button class="faq-question">
-                        Какие маркетплейсы поддерживаете?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>WB и Ozon. Яндекс Маркет в планах.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <button class="faq-question">
-                        Мои данные в безопасности?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Доступ только на чтение, мы не можем менять цены или заказы в твоём кабинете.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <button class="faq-question">
-                        Сколько времени нужно на подключение?
-                        <span class="faq-toggle">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>2 минуты. Нужен только API-ключ из личного кабинета маркетплейса.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer>
-        <div class="container">
-            ProfitRadar MP © 2026
-        </div>
-    </footer>
-
-    <script>
-        // FAQ Accordion
-        document.querySelectorAll('.faq-question').forEach(button => {
-            button.addEventListener('click', () => {
-                const item = button.parentElement;
-                const isActive = item.classList.contains('active');
-
-                // Закрываем все
-                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-
-                // Открываем текущий (если он не был активен)
-                if (!isActive) {
-                    item.classList.add('active');
-                }
-            });
-        });
-    </script>
+    </div>
+</section>
 
 </body>
 </html>
