@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProfitRadar MP — Телеграм-бот для расчёта маржи на WB и Ozon</title>
-    <meta name="description" content="ProfitRadar MP — Telegram-бот, который показывает реальную прибыль после всех комиссий, логистики и возвратов. Без Excel, без догадок.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>ProfitRadar MP — AI-финансовый директор для селлеров WB и Ozon</title>
     <style>
         * {
             margin: 0;
@@ -15,819 +11,869 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --accent: #f25c2b;
-            --accent-hover: #d94d1f;
-            --telegram: #0088cc;
-            --bg-light: #f0edee;
-            --bg-pink: #fff4ef;
-            --text: #111;
-            --text-muted: #666;
-            --border: #e5e5e5;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            background: #fff;
+            color: #333;
+            background: #f8f9fa;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 20px;
         }
 
-        /* ========== TOP BAR ========== */
-        .topbar {
-            background: #0a0a0a;
-            padding: 14px 0;
-            text-align: center;
-        }
-
-        .topbar-text {
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-
-        /* ========== HERO ========== */
+        /* Hero Section */
         .hero {
-            padding: 120px 0 100px;
-            background: #fff;
+            background: white;
+            color: #1a202c;
+            padding: 80px 0 100px;
             position: relative;
             overflow: hidden;
         }
 
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(255, 244, 239, 0.9) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -150px;
-            left: -150px;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255, 244, 239, 0.7) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
         .hero .container {
-            position: relative;
-            z-index: 1;
-            max-width: 900px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: #fff5f0;
+            color: #ff6b35;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 30px;
         }
 
         .hero h1 {
-            font-size: clamp(40px, 6vw, 72px);
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 30px;
             font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -0.02em;
-            margin-bottom: 32px;
-            max-width: 700px;
-            color: var(--accent);
+            color: #1a202c;
         }
 
-        .hero p {
-            font-size: 20px;
-            line-height: 1.6;
-            color: var(--text-muted);
+        .hero .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #718096;
+            line-height: 1.7;
             max-width: 600px;
         }
 
-        /* ========== STATS ========== */
-        .stats {
-            padding: 100px 0;
-            background: var(--bg-light);
+        .cta-button {
+            display: inline-block;
+            background: #4299e1;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(66, 153, 225, 0.3);
         }
 
-        .stats-grid {
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(66, 153, 225, 0.4);
+            background: #3182ce;
+        }
+
+        .cta-button.orange {
+            background: #ff6b35;
+            box-shadow: 0 6px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .cta-button.orange:hover {
+            background: #e55a2b;
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        /* Problem Section */
+        .problem {
+            padding: 80px 0;
+            background: #f5f5f7;
+        }
+
+        .problem-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 60px;
             align-items: center;
         }
 
-        .stats-text h2 {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 24px;
+        .problem-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #1a202c;
+            line-height: 1.2;
         }
 
-        .stats-text p {
-            font-size: 17px;
-            color: var(--text-muted);
+        .problem-text p {
+            font-size: 1.1rem;
+            color: #718096;
             line-height: 1.7;
         }
 
-        .stats-bars {
+        .problem-stats {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
 
-        .bar-row {
-            background: #fff;
+        .stat-item {
+            background: white;
+            padding: 20px 25px;
             border-radius: 12px;
-            padding: 16px 20px;
-            display: grid;
-            grid-template-columns: 120px 1fr 50px;
+            display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .bar-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
+        .stat-label {
+            font-weight: 600;
+            color: #2d3748;
+            flex: 1;
         }
 
-        .bar-track {
+        .stat-bar {
+            flex: 2;
             height: 8px;
-            background: #e5e5e5;
-            border-radius: 100px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 0 20px;
             overflow: hidden;
         }
 
-        .bar-fill {
+        .stat-bar-fill {
             height: 100%;
-            background: var(--accent);
-            border-radius: 100px;
+            background: #ff6b35;
+            border-radius: 4px;
         }
 
-        .bar-value {
-            font-size: 14px;
+        .stat-value {
             font-weight: 700;
-            color: var(--accent);
+            color: #ff6b35;
+            min-width: 50px;
             text-align: right;
         }
 
-        /* ========== FEATURES ========== */
-        .features {
+        /* Solution Section */
+        .solution {
             padding: 100px 0;
-            background: #fff;
+            background: white;
         }
 
-        .section-label {
-            display: inline-block;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-        }
-
-        .section-subtitle {
-            font-size: 18px;
-            color: var(--text-muted);
-            max-width: 600px;
+        .solution-header {
             margin-bottom: 60px;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+        .solution-label {
+            color: #ff6b35;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
         }
 
-        .feature-card {
-            padding: 32px;
-            border: 1px solid var(--border);
+        .solution h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #1a202c;
+        }
+
+        .solution p {
+            font-size: 1.1rem;
+            color: #718096;
+            max-width: 600px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .feature {
+            background: #f9fafb;
+            padding: 40px 30px;
             border-radius: 16px;
-            background: #fff;
             transition: all 0.3s ease;
         }
 
-        .feature-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--bg-pink);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
+            font-size: 3rem;
             margin-bottom: 20px;
-            color: var(--accent);
         }
 
-        .feature-card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
+        .feature h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 1.3rem;
         }
 
-        .feature-card p {
-            font-size: 15px;
-            color: var(--text-muted);
-            line-height: 1.6;
+        .feature p {
+            color: #718096;
         }
 
-        /* ========== HOW IT WORKS ========== */
-        .how-it-works {
+        /* AI Future Section */
+        .ai-future {
             padding: 100px 0;
-            background: #0a0a0a;
-            color: #fff;
+            background: #1a202c;
+            color: white;
         }
 
-        .how-it-works .section-label {
-            color: var(--accent);
+        .ai-future .section-title {
+            color: white;
         }
 
-        .how-it-works .section-title {
-            color: #fff;
+        .ai-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #a0aec0;
+            margin-bottom: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            background: #ff6b35;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ai-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .ai-feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 35px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .ai-feature:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 107, 53, 0.5);
+        }
+
+        .ai-feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .ai-feature h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #ff6b35;
+        }
+
+        .ai-feature p {
+            color: #cbd5e0;
+            line-height: 1.7;
+        }
+
+        .ai-example {
+            background: rgba(255, 107, 53, 0.1);
+            border-left: 3px solid #ff6b35;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #e2e8f0;
+        }
+
+        .coming-soon {
+            text-align: center;
+            margin-top: 60px;
+            padding: 40px;
+            background: rgba(255, 107, 53, 0.1);
+            border-radius: 20px;
+            border: 2px dashed rgba(255, 107, 53, 0.4);
+        }
+
+        .coming-soon h3 {
+            color: #ff6b35;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .coming-soon p {
+            color: #a0aec0;
+            font-size: 1.1rem;
+        }
+
+        /* Ecosystem Section */
+        .ecosystem {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .ecosystem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .ecosystem-item {
+            text-align: center;
+            padding: 40px 30px;
+            background: #f9fafb;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .ecosystem-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ecosystem-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .ecosystem-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        /* Pricing Section - НОВАЯ ВЕРСИЯ ПО СКРИНШОТУ */
+        .pricing {
+            padding: 100px 0;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .pricing-header {
+            position: relative;
             margin-bottom: 60px;
         }
 
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-        }
-
-        .step {
-            padding-top: 20px;
-        }
-
-        .step-number {
-            font-size: 48px;
+        .pricing-header h2 {
+            font-size: 3rem;
             font-weight: 800;
-            color: var(--accent);
-            margin-bottom: 20px;
-            line-height: 1;
+            color: #1a202c;
+            text-align: left;
         }
 
-        .step h3 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .step p {
-            font-size: 15px;
-            color: #999;
-            line-height: 1.6;
-        }
-
-        /* ========== TESTIMONIALS ========== */
-        .testimonials {
-            padding: 100px 0;
-            background: #fff;
-        }
-
-        .testimonials .section-title {
-            margin-bottom: 40px;
-        }
-
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .testimonial-card {
-            padding: 32px;
-            background: var(--bg-light);
-            border-radius: 16px;
-        }
-
-        .testimonial-quote {
-            font-size: 17px;
-            line-height: 1.6;
-            font-style: italic;
-            margin-bottom: 24px;
-            color: var(--text);
-        }
-
-        .testimonial-author {
-            font-size: 14px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* ========== CTA ========== */
-        .cta {
-            padding: 100px 0;
-            background: var(--bg-pink);
-            text-align: center;
-        }
-
-        .cta .container {
-            max-width: 700px;
-        }
-
-        .cta h2 {
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-        }
-
-        .cta p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .cta-telegram-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 32px;
-            background: var(--telegram);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 32px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.3);
-        }
-
-        .cta-telegram-link:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 136, 204, 0.4);
-        }
-
-        .cta-telegram-link::before {
-            content: '';
-            width: 28px;
-            height: 28px;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>') no-repeat center;
-            background-size: contain;
-        }
-
-        .cta-hint {
-            margin-top: 24px;
-            font-size: 14px;
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-
-        .cta-hint code {
-            background: rgba(0, 136, 204, 0.1);
-            color: var(--telegram);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        /* ========== PRICING ========== */
-        .pricing {
-            padding: 100px 0;
-            background: #f5f5f7;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .pricing .section-number {
+        .pricing-number {
             position: absolute;
-            top: 40px;
-            right: 60px;
-            font-size: 180px;
+            top: -30px;
+            right: 0;
+            font-size: 10rem;
             font-weight: 900;
             color: rgba(0, 0, 0, 0.04);
             line-height: 1;
-            pointer-events: none;
             user-select: none;
-        }
-
-        .pricing .section-title {
-            margin-bottom: 60px;
-            position: relative;
-            z-index: 1;
         }
 
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            position: relative;
-            z-index: 1;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
         }
 
         .pricing-card {
-            padding: 48px 40px;
-            border-radius: 20px;
-            min-height: 420px;
+            border-radius: 16px;
+            padding: 40px 35px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .pricing-card.free {
-            background: #1a1a1a;
-            color: #fff;
+            background: #1a202c;
+            color: white;
         }
 
         .pricing-card.pro {
-            background: var(--accent);
-            color: #fff;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s ease;
-            cursor: default; /* Изменено с pointer, так как это пока заглушка */
-            position: relative;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
         }
 
-        .pricing-card.pro:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(242, 92, 43, 0.3);
-        }
-
-        .pricing-label {
-            font-size: 13px;
+        .pricing-card-label {
+            font-size: 0.85rem;
             font-weight: 700;
-            letter-spacing: 0.1em;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            opacity: 0.7;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
-        .pricing-price {
-            font-size: 56px;
+        .pricing-card.free .pricing-card-label {
+            color: #a0aec0;
+        }
+
+        .pricing-card.pro .pricing-card-label {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .pricing-card-price {
+            font-size: 4rem;
             font-weight: 800;
+            margin-bottom: 30px;
             line-height: 1;
-            margin-bottom: 32px;
-            letter-spacing: -0.02em;
         }
 
-        .pricing-price span {
-            font-size: 32px;
+        .pricing-card-price span {
+            font-size: 1.5rem;
             font-weight: 600;
+            opacity: 0.9;
         }
 
         .pricing-features {
             list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            margin-bottom: 30px;
+            flex-grow: 1;
         }
 
         .pricing-features li {
-            font-size: 16px;
-            line-height: 1.5;
+            padding: 18px 0;
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 1.05rem;
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
         }
 
         .pricing-features li::before {
             content: '✓';
+            margin-right: 12px;
             font-weight: 700;
-            flex-shrink: 0;
-            opacity: 0.9;
+            color: white;
+            font-size: 1.2rem;
+            min-width: 20px;
         }
 
-        /* ========== COMMANDS (НОВОЕ) ========== */
-        .commands {
-            padding: 100px 0;
-            background: #fff;
+        /* Кнопка в FREE — оранжевая на всю ширину */
+        .pricing-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 18px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
         }
 
-        /* ========== FAQ ========== */
+        .pricing-card.free .pricing-button {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .pricing-card.free .pricing-button:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+
+        /* Плашка в PRO — полупрозрачная белая */
+        .pricing-pro-note {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .pricing-pro-note code {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        /* Бейдж СКОРО */
+        .pricing-badge-soon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+        }
+
+        /* FAQ Section */
         .faq {
             padding: 100px 0;
-            background: var(--bg-light);
-        }
-
-        .faq .container {
-            max-width: 800px;
+            background: white;
         }
 
         .faq .section-title {
-            margin-bottom: 40px;
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto 50px;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1a202c;
         }
 
         .faq-list {
-            display: flex;
-            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .faq-item {
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .faq-question {
-            width: 100%;
-            padding: 24px 0;
-            background: none;
-            border: none;
-            text-align: left;
-            font-size: 17px;
-            font-weight: 600;
-            font-family: inherit;
-            color: var(--text);
+            padding: 25px 0;
+            font-weight: 700;
+            font-size: 1.15rem;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: color 0.2s ease;
+            transition: all 0.3s ease;
+            color: #1a202c;
+            background: transparent;
         }
 
         .faq-question:hover {
-            color: var(--accent);
+            color: #ff6b35;
         }
 
-        .faq-toggle {
-            font-size: 22px;
+        .faq-question::after {
+            content: '+';
+            font-size: 1.8rem;
+            color: #718096;
             font-weight: 300;
-            color: var(--text-muted);
-            transition: transform 0.3s ease;
-            flex-shrink: 0;
-            margin-left: 16px;
-        }
-
-        .faq-item.active .faq-toggle {
-            transform: rotate(45deg);
+            transition: all 0.3s ease;
+            min-width: 30px;
+            text-align: center;
         }
 
         .faq-answer {
+            padding: 0 0;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
+            transition: all 0.4s ease;
+            color: #718096;
+            line-height: 1.7;
+            font-size: 1.05rem;
         }
 
         .faq-item.active .faq-answer {
+            padding: 0 0 25px 0;
             max-height: 300px;
-            padding-bottom: 24px;
         }
 
-        .faq-answer p {
-            font-size: 16px;
-            color: var(--text-muted);
-            line-height: 1.7;
+        .faq-item.active .faq-question::after {
+            content: '×';
+            color: #1a202c;
         }
 
-        /* ========== FOOTER ========== */
-        footer {
-            padding: 40px 0;
-            background: #fff;
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            background: #ff6b35;
+            color: white;
             text-align: center;
-            font-size: 14px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
         }
 
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 900px) {
-            .stats-grid,
-            .features-grid,
-            .testimonials-grid,
-            .pricing-grid {
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        /* Footer */
+        footer {
+            background: #f8f9fa;
+            color: #718096;
+            padding: 30px 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .pricing-header h2 {
+                font-size: 2rem;
+            }
+
+            .pricing-number {
+                font-size: 5rem;
+                top: -10px;
+            }
+
+            .faq .section-title {
+                font-size: 2rem;
+            }
+
+            .problem-content {
                 grid-template-columns: 1fr;
             }
 
-            .steps-grid {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-
-            .hero {
-                padding: 80px 0 60px;
-            }
-
-            .stats, .features, .how-it-works, .testimonials, .cta, .pricing, .commands, .faq {
-                padding: 70px 0;
-            }
-
-            .pricing .section-number {
-                font-size: 120px;
-                top: 20px;
-                right: 20px;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .bar-row {
-                grid-template-columns: 90px 1fr 45px;
-                gap: 12px;
-                padding: 12px 14px;
-            }
-
-            .bar-label {
-                font-size: 12px;
-            }
-
-            .pricing-card {
-                padding: 32px 24px;
-                min-height: auto;
-            }
-
-            .pricing-price {
-                font-size: 44px;
-            }
-
-            .cta-telegram-link {
-                padding: 16px 24px;
-                font-size: 16px;
+            .pricing-card-price {
+                font-size: 3rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP BAR -->
-    <div class="topbar">
-        <span class="topbar-text">ProfitRadar MP</span>
-    </div>
-
-    <!-- HERO -->
+    <!-- Hero Section -->
     <section class="hero">
         <div class="container">
+            <div class="hero-badge">ProfitRadar MP</div>
             <h1>Ты продаёшь на маркетплейсе, но не знаешь свою реальную прибыль?</h1>
-            <p>ProfitRadar MP — это Telegram-бот, который показывает, сколько ты зарабатываешь на каждой единице товара после всех комиссий, логистики и возвратов. Без Excel, без догадок.</p>
+            <p class="subtitle">ProfitRadar MP показывает, сколько ты зарабатываешь на каждой единице товара после всех комиссий, логистики и возвратов. Без Excel, без догадок.</p>
+            <a href="https://t.me/ProfitRadar_mp_bot" class="cta-button">Рассчитать мою маржу →</a>
         </div>
     </section>
 
-    <!-- STATS -->
-    <section class="stats">
+    <!-- Problem Section -->
+    <section class="problem">
         <div class="container">
-            <div class="stats-grid">
-                <div class="stats-text">
+            <div class="problem-content">
+                <div class="problem-text">
                     <h2>67% селлеров не знают свою реальную маржинальность</h2>
                     <p>Комиссии WB и Ozon меняются каждый месяц. Логистика, хранение, возвраты, штрафы съедают прибыль незаметно. Ты видишь оборот в личном кабинете и думаешь, что всё ок. А потом смотришь на расчётный счёт и не понимаешь, куда делись деньги.</p>
                 </div>
-                <div class="stats-bars">
-                    <div class="bar-row">
-                        <div class="bar-label">Комиссия МП</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 75%"></div></div>
-                        <div class="bar-value">15%</div>
+                <div class="problem-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Комиссия МП</span>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 60%"></div></div>
+                        <span class="stat-value">15%</span>
                     </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Логистика</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 60%"></div></div>
-                        <div class="bar-value">12%</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Логистика</span>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 48%"></div></div>
+                        <span class="stat-value">12%</span>
                     </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Хранение</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 35%"></div></div>
-                        <div class="bar-value">7%</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Хранение</span>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 28%"></div></div>
+                        <span class="stat-value">7%</span>
                     </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Возвраты</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 45%"></div></div>
-                        <div class="bar-value">9%</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Возвраты</span>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 36%"></div></div>
+                        <span class="stat-value">9%</span>
                     </div>
-                    <div class="bar-row">
-                        <div class="bar-label">Штрафы</div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 15%"></div></div>
-                        <div class="bar-value">3%</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Штрафы</span>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 12%"></div></div>
+                        <span class="stat-value">3%</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FEATURES -->
-    <section class="features">
+    <!-- Solution Section -->
+    <section class="solution">
         <div class="container">
-            <div class="section-label">Решение</div>
-            <h2 class="section-title">Контроль прибыли в одном экране</h2>
-            <p class="section-subtitle">Калькулятор юнит-экономики, который учитывает все скрытые расходы маркетплейсов. Видишь реальную картину по каждому SKU.</p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Реальная маржа, а не выручка</h3>
-                    <p>Считаем чистую прибыль после всех комиссий, логистики и возвратов</p>
-                </div>
-                <div class="feature-card">
+            <div class="solution-header">
+                <div class="solution-label">Решение</div>
+                <h2>Контроль прибыли в одном экране</h2>
+                <p>Калькулятор юнит-экономики, который учитывает все скрытые расходы маркетплейсов. Видишь реальную картину по каждому SKU.</p>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
                     <div class="feature-icon">⚡</div>
-                    <h3>Обновление за минуты</h3>
-                    <p>Подключаешь кабинет, данные подтягиваются автоматически</p>
+                    <h3>Мгновенный расчет</h3>
+                    <p>Введите 3 цифры — получите чистую прибыль за 10 секунд</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Точность 99%</h3>
+                    <p>Актуальные комиссии WB и Ozon обновляются автоматически</p>
+                </div>
+                <div class="feature">
                     <div class="feature-icon">💡</div>
-                    <h3>Рекомендации по каждому SKU</h3>
-                    <p>Не просто цифры, а конкретные действия для роста прибыли</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔔</div>
-                    <h3>Алерты при падении маржи</h3>
-                    <p>Узнаёшь о проблеме до того, как она съест бюджет</p>
+                    <h3>Умные советы</h3>
+                    <p>Бот подскажет, если маржа критически низкая</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- HOW IT WORKS -->
-    <section class="how-it-works">
+    <!-- AI Future Section -->
+    <section class="ai-future">
         <div class="container">
-            <div class="section-label">Как это работает</div>
-            <h2 class="section-title">Три шага до контроля</h2>
+            <div style="text-align: center;">
+                <span class="ai-badge">🚀 Скоро в ProfitRadar</span>
+            </div>
+            <h2 class="section-title">AI-финансовый директор для вашего бизнеса</h2>
+            <p class="ai-subtitle">Мы не просто считаем маржу. Мы превращаем ProfitRadar в полноценного AI-ассистента, который работает на вас 24/7. Вот что уже в разработке:</p>
 
-            <div class="steps-grid">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Подключи кабинет</h3>
-                    <p>Авторизуйся через API WB или Ozon. Это занимает 2 минуты, доступ только на чтение.</p>
+            <div class="ai-features">
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">📊</span>
+                    <h3>Утренний AI-отчет</h3>
+                    <p>Каждое утро бот присылает анализ за вчера: сколько вы заработали, где потеряли, что нужно изменить.</p>
+                    <div class="ai-example">
+                        "За вчера вы потеряли 4 870 ₽. Причины: выросла комиссия WB, упал выкуп. Что делать: поднимите цену на 29 ₽."
+                    </div>
                 </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Получи расчёт</h3>
-                    <p>Система разложит каждый заказ на расходы и покажет чистую прибыль по каждому SKU.</p>
+
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">⚠️</span>
+                    <h3>Прогноз убытков</h3>
+                    <p>AI анализирует тренды и предупреждает за неделю, если товар станет убыточным.</p>
+                    <div class="ai-example">
+                        "Внимание! Товар 'Чехол iPhone 15' через 7 дней выйдет в минус из-за роста комиссии. Рекомендация: поднять цену на 45 ₽."
+                    </div>
                 </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Действуй</h3>
-                    <p>Следуй рекомендациям: убери убыточные позиции, подними цены, оптимизируй логистику.</p>
+
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">🎯</span>
+                    <h3>Автоматические рекомендации по ценам</h3>
+                    <p>AI анализирует конкурентов, комиссии и спрос, чтобы предложить оптимальную цену.</p>
+                    <div class="ai-example">
+                        "Поднимите цену с 1 290 ₽ до 1 349 ₽ — это увеличит маржу на 18% без потери продаж."
+                    </div>
+                </div>
+
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">📈</span>
+                    <h3>Анализ возвратов и выкупов</h3>
+                    <p>AI отслеживает процент выкупа и находит товары, которые "съедают" прибыль на логистике.</p>
+                    <div class="ai-example">
+                        "Товар 'Платье летнее' имеет выкуп 23%. Вы теряете 340 ₽ на каждой единице. Рекомендация: улучшить фото или снять с продажи."
+                    </div>
+                </div>
+
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">💰</span>
+                    <h3>Анализ рекламных кампаний</h3>
+                    <p>AI определяет, какие кампании приносят прибыль, а какие сливают бюджет.</p>
+                    <div class="ai-example">
+                        "Кампания №3 убыточна: вы тратите 450 ₽ на клик, а маржа всего 280 ₽. Рекомендация: отключить или снизить ставку."
+                    </div>
+                </div>
+
+                <div class="ai-feature">
+                    <span class="ai-feature-icon">🔔</span>
+                    <h3>Push-уведомления о критических изменениях</h3>
+                    <p>Мгновенные алерты, когда что-то идет не так: скачок комиссии, падение продаж, заканчиваются остатки.</p>
+                    <div class="ai-example">
+                        "🚨 Срочно! Комиссия WB в категории 'Электроника' выросла на 3%. Ваша маржа стала отрицательной. Срочно поднимите цену!"
+                    </div>
+                </div>
+            </div>
+
+            <div class="coming-soon">
+                <h3>🎁 Специальное предложение для ранних пользователей</h3>
+                <p>Оставьте заявку сейчас и получите <strong>скидку 50%</strong> на AI-функции при запуске + 3 месяца бесплатного использования.</p>
+                <br>
+                <a href="https://t.me/ProfitRadar_mp_bot" class="cta-button orange">Получить скидку 50% →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ecosystem Section -->
+    <section class="ecosystem">
+        <div class="container">
+            <h2 class="section-title">Три точки входа в ProfitRadar</h2>
+            <div class="ecosystem-grid">
+                <div class="ecosystem-item">
+                    <div class="ecosystem-icon">🌐</div>
+                    <h3>Сайт</h3>
+                    <p>Узнайте о возможностях, получите инструкции и скачайте приложение</p>
+                </div>
+                <div class="ecosystem-item">
+                    <div class="ecosystem-icon">🤖</div>
+                    <h3>Telegram-бот</h3>
+                    <p>Быстрый расчет маржи за 10 секунд прямо в мессенджере</p>
+                </div>
+                <div class="ecosystem-item">
+                    <div class="ecosystem-icon">📱</div>
+                    <h3>Android-приложение</h3>
+                    <p>Полная функциональность, история расчетов и push-уведомления</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- TESTIMONIALS -->
-    <section class="testimonials">
-        <div class="container">
-            <h2 class="section-title">Селлеры уже считают</h2>
-
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">«Я думал, у меня маржа 25%. ProfitRadar показал 9%. Убрал три убыточных SKU и вышел на 18% за месяц.»</p>
-                    <div class="testimonial-author">Селлер WB, одежда, 150+ SKU</div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">«Наконец вижу, сколько реально стоит каждый возврат. Раньше даже не считал.»</p>
-                    <div class="testimonial-author">Селлер Ozon, электроника</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="cta">
-        <div class="container">
-            <h2>Узнай свою реальную маржу сегодня</h2>
-            <p>Бесплатный расчёт по твоим данным. Без обязательств, без карты.</p>
-
-            <a href="https://t.me/profitradar_mp_bot" class="cta-telegram-link" target="_blank">
-                Открыть @profitradar_mp_bot
-            </a>
-
-            <p class="cta-hint">в боте просто введи <code>/calc</code> и получишь моментальный расчёт</p>
-        </div>
-    </section>
-
-    <!-- PRICING -->
+    <!-- Pricing Section - ОБНОВЛЕНА ПО СКРИНШОТУ -->
     <section class="pricing">
-        <div class="section-number">03</div>
         <div class="container">
-            <h2 class="section-title">Тарифы</h2>
-
+            <div class="pricing-header">
+                <h2>Тарифы</h2>
+                <div class="pricing-number">03</div>
+            </div>
             <div class="pricing-grid">
                 <div class="pricing-card free">
-                    <div class="pricing-label">Free</div>
-                    <div class="pricing-price">0 ₽</div>
+                    <div class="pricing-card-label">FREE</div>
+                    <div class="pricing-card-price">0 ₽</div>
                     <ul class="pricing-features">
                         <li>Калькулятор маржи (ручной ввод)</li>
                         <li>Без лимитов на расчёты</li>
                         <li>Без регистрации</li>
                         <li>Актуальные тарифы WB/Ozon</li>
                     </ul>
+                    <a href="https://t.me/ProfitRadar_mp_bot" class="pricing-button">Попробовать бесплатно →</a>
                 </div>
 
-                <!-- ИЗМЕНЕНО: Pro теперь со статусом "СКОРО" -->
                 <div class="pricing-card pro">
-                    <div style="position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em;">СКОРО</div>
-                    <div class="pricing-label">Pro</div>
-                    <div class="pricing-price">990 <span>₽/мес</span></div>
+                    <div class="pricing-badge-soon">СКОРО</div>
+                    <div class="pricing-card-label">PRO</div>
+                    <div class="pricing-card-price">990 <span>₽/мес</span></div>
                     <ul class="pricing-features">
                         <li>API WB + Ozon (автоподключение)</li>
                         <li>Автоматический расчёт всех SKU</li>
@@ -835,123 +881,77 @@
                         <li>Алерты при падении маржи</li>
                         <li>Аналитика топ/антитоп</li>
                     </ul>
-                    <div style="margin-top: 32px; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px; text-align: center; font-size: 15px; font-weight: 600;">
-                        Напиши <code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 6px; font-family: monospace;">/pro</code> в боте, чтобы записаться в лист ожидания
+                    <div class="pricing-pro-note">
+                        Напиши <code>/pro</code> в боте, чтобы записаться в лист ожидания
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- COMMANDS (НОВАЯ СЕКЦИЯ) -->
-    <section class="commands">
-        <div class="container">
-            <div class="section-label">Инструкция</div>
-            <h2 class="section-title">Команды бота</h2>
-            <p class="section-subtitle">Всё управление в одном месте. Просто отправь команду в чат.</p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🚀</div>
-                    <h3>/start</h3>
-                    <p>Запуск бота и приветственное сообщение с быстрой инструкцией.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>/calc</h3>
-                    <p>Пошаговый калькулятор маржи для одного товара (цена, себестоимость, вес).</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚖️</div>
-                    <h3>/compare</h3>
-                    <p>Сравнение прибыли одного и того же товара на WB и Ozon в одном сообщении.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💎</div>
-                    <h3>/pro</h3>
-                    <p>Информация о тарифах и запись в лист ожидания запуска платных функций.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">❓</div>
-                    <h3>/help</h3>
-                    <p>Полная справка по всем возможностям и командам бота.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3>/stats</h3>
-                    <p>Статистика использования бота (доступно только администратору).</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ -->
+    <!-- FAQ Section -->
     <section class="faq">
         <div class="container">
             <h2 class="section-title">Частые вопросы</h2>
-
             <div class="faq-list">
                 <div class="faq-item">
-                    <button class="faq-question">
-                        Это бесплатно?
-                        <span class="faq-toggle">+</span>
-                    </button>
+                    <div class="faq-question">Это бесплатно?</div>
                     <div class="faq-answer">
-                        <p>Базовый расчёт бесплатный. Подписка нужна для автообновления данных и алертов.</p>
+                        Базовый расчёт бесплатный. Подписка нужна для автообновления данных и алертов.
                     </div>
                 </div>
 
                 <div class="faq-item">
-                    <button class="faq-question">
-                        Какие маркетплейсы поддерживаете?
-                        <span class="faq-toggle">+</span>
-                    </button>
+                    <div class="faq-question">Какие маркетплейсы поддерживаете?</div>
                     <div class="faq-answer">
-                        <p>WB и Ozon. Яндекс Маркет в планах.</p>
+                        Сейчас поддерживаем Wildberries и Ozon. В планах — добавить Яндекс.Маркет и другие площадки.
                     </div>
                 </div>
 
                 <div class="faq-item">
-                    <button class="faq-question">
-                        Мои данные в безопасности?
-                        <span class="faq-toggle">+</span>
-                    </button>
+                    <div class="faq-question">Мои данные в безопасности?</div>
                     <div class="faq-answer">
-                        <p>Доступ только на чтение, мы не можем менять цены или заказы в твоём кабинете.</p>
+                        Да! Мы используем только read-only доступ к API маркетплейсов. Это значит, что мы можем только читать данные, но не можем ничего изменить. Ваши API-ключи хранятся в зашифрованном виде.
                     </div>
                 </div>
 
                 <div class="faq-item">
-                    <button class="faq-question">
-                        Сколько времени нужно на подключение?
-                        <span class="faq-toggle">+</span>
-                    </button>
+                    <div class="faq-question">Сколько времени нужно на подключение?</div>
                     <div class="faq-answer">
-                        <p>2 минуты. Нужен только API-ключ из личного кабинета маркетплейса.</p>
+                        Подключение API занимает 2-3 минуты. Нужно скопировать API-ключ из личного кабинета селлера и вставить в бота. После этого все расчеты будут автоматическими.
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FOOTER -->
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Начните экономить время и деньги прямо сейчас</h2>
+            <p>Присоединяйтесь к сотням селлеров, которые уже используют ProfitRadar</p>
+            <a href="https://t.me/ProfitRadar_mp_bot" class="cta-button">🚀 Запустить бота бесплатно</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
     <footer>
         <div class="container">
-            ProfitRadar MP © 2026
+            <p>ProfitRadar MP © 2026</p>
         </div>
     </footer>
 
     <script>
         // FAQ Accordion
-        document.querySelectorAll('.faq-question').forEach(button => {
-            button.addEventListener('click', () => {
-                const item = button.parentElement;
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
                 const isActive = item.classList.contains('active');
-
-                // Закрываем все
-                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-
-                // Открываем текущий (если он не был активен)
+                
+                document.querySelectorAll('.faq-item').forEach(faq => {
+                    faq.classList.remove('active');
+                });
+                
                 if (!isActive) {
                     item.classList.add('active');
                 }
