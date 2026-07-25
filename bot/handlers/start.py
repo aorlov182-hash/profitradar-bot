@@ -24,7 +24,7 @@ async def cmd_start(message: Message) -> None:
     # Создаем кнопку со ссылкой на сайт
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🌐 Перейти на наш сайт", url="https://profitradar-landing.pages.dev")]
+            [InlineKeyboardButton(text="🌐 Перейти на наш сайт", url="https://aorlov182-hash.github.io/profitradar-site/")]
         ]
     )
 
