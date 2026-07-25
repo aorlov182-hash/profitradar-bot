@@ -1,1 +1,8 @@
 python -m bot.main
+
+Сохраняем на ГитХаб
+
+git add .
+git commit -m "Add /app command with GitHub Pages and Release links"
+git push
+
