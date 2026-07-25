@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 # Создание бота
 bot = Bot(
-    token=settings.BOT_TOKEN,
+    token=settings.bot_token,
     default=DefaultBotProperties(
         parse_mode=ParseMode.HTML
     )
@@ -93,6 +93,8 @@ async def main():
     logger.info("🚀 Запуск ProfitRadar MP")
 
     try:
+        await bot.delete_webhook(drop_pending_updates=True)
+await dp.start_polling(bot)
         await dp.start_polling(bot)
 
     finally:
