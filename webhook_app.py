@@ -73,14 +73,14 @@ async def main():
     dp.message.middleware(AnalyticsMiddleware())
     dp.callback_query.middleware(AnalyticsMiddleware())
 
-    app = web.Application()
+   web_app = web.Application()
     
-    webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
-    webhook_requests_handler.register(app, path="/webhook")
-    
-    setup_application(app, dp, bot=bot)
-    
-    runner = web.AppRunner(app)
+webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
+webhook_requests_handler.register(web_app, path="/webhook")
+
+setup_application(web_app, dp, bot=bot)
+
+runner = web.AppRunner(web_app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)
     await site.start()
@@ -98,15 +98,4 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-    await message.reply(
-        "📱 **Скачать приложение ProfitRadar MP**\n\n"
-        "✅ Оффлайн-калькулятор маржи\n"
-        "✅ История расчетов\n"
-        "✅ Работает без интернета\n\n"
-        "🔗 **Скачать APK (бесплатно, 49 МБ):**\n"
-        "https://github.com/aorlov182-hash/profitradar-bot/releases/download/v1.0.0/ProfitRadar.apk\n\n"
-        "💡 **Сайт с инструкциями:**\n"
-        "https://aorlov182-hash.github.io/profitradar-site/",
-        parse_mode="markdown",
-        disable_web_page_preview=False
-    )
+    
