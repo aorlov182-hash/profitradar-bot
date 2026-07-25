@@ -7,7 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from bot.config import settings
+
 from bot.handlers import (
     start,
     calculator,
@@ -61,32 +61,40 @@ async def on_shutdown(bot: Bot) -> None:
     logger.info("Webhook deleted")
 
 async def main():
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(
+        token=BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
+
     dp = Dispatcher()
-    
+
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
-    
+
     setup_routers(dp)
-    
+
     dp.message.middleware(ThrottleMiddleware(rate_limit=1.0))
     dp.message.middleware(AnalyticsMiddleware())
     dp.callback_query.middleware(AnalyticsMiddleware())
 
-   web_app = web.Application()
-    
-webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
-webhook_requests_handler.register(web_app, path="/webhook")
+    web_app = web.Application()
 
-setup_application(web_app, dp, bot=bot)
+    webhook_requests_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot
+    )
+    webhook_requests_handler.register(web_app, path="/webhook")
 
-runner = web.AppRunner(web_app)
+    setup_application(web_app, dp, bot=bot)
+
+    runner = web.AppRunner(web_app)
     await runner.setup()
+
     site = web.TCPSite(runner, "0.0.0.0", PORT)
     await site.start()
-    
+
     logger.info(f"Server started on port {PORT}")
-    
+
     try:
         while True:
             await asyncio.sleep(3600)
