@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+print("DIGEST LOADED")
+
 from bot.utils.access import check_pro
 
 
