@@ -1,8 +1,6 @@
-from aiogram import Router
+from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message
-
-print("DIGEST LOADED")
 
 from bot.utils.access import check_pro
 
@@ -19,7 +17,7 @@ async def digest(message: Message):
             "PRO: 990 ₽/месяц\n\n"
             "В PRO входит:\n"
             "✅ Дайджест прибыли\n"
-            "✅ Алерты по марже\n"
+            "✅ Алерты по падению маржи\n"
             "✅ API маркетплейсов"
         )
         return
@@ -27,5 +25,21 @@ async def digest(message: Message):
     await message.answer(
         "📬 Ваш PRO дайджест прибыли:\n\n"
         "Продажи: 0 ₽\n"
-        "Прибыль: 0 ₽"
+        "Прибыль: 0 ₽\n\n"
+        "Автоматический расчет будет доступен после подключения API."
+    )
+
+
+async def send_digest_to_user(bot: Bot, user_id: int):
+    """
+    Отправка ежедневного PRO дайджеста пользователю.
+    Используется планировщиком APScheduler.
+    """
+
+    await bot.send_message(
+        user_id,
+        "📬 Ваш ежедневный PRO дайджест прибыли:\n\n"
+        "📦 Продажи: 0 ₽\n"
+        "💰 Прибыль: 0 ₽\n\n"
+        "ProfitRadar MP"
     )
