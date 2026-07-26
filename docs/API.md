@@ -1,284 +1,470 @@
-# ProfitRadar MP — Backend API
+# ProfitRadar MP — API документация
+
 
 ## Назначение
 
-Backend API является центральной частью платформы ProfitRadar MP.
+Backend API является центральным компонентом платформы ProfitRadar MP.
 
-Все клиенты системы взаимодействуют исключительно через Backend API.
+Через API взаимодействуют:
 
-Клиенты:
+- Telegram Bot;
+- Android приложение;
+- Website;
+- AI-модули;
+- внешние сервисы.
 
-- Telegram Bot
-- Android App
-- Website
-- будущие сервисы
 
-Backend отвечает за:
+Основная технология:
 
-- авторизацию;
-- хранение данных;
-- подписки;
-- расчеты;
-- API Wildberries;
-- API Ozon;
-- AI-анализ;
-- уведомления.
-
----
-
-# Технологии
-
-Backend разрабатывается на:
-
-- Python 3.13+
+- Python
 - FastAPI
-- SQLAlchemy 2.x
-- Alembic
-- PostgreSQL
-- Pydantic v2
-- Uvicorn
 
----
 
-# Формат обмена
-
-Все запросы используют:
+Формат обмена данными:
 
 JSON
 
-Ответы сервера также возвращаются в формате JSON.
+
+Версия API:
+
+v1
+
+
+---
+
+# Базовый URL
+
+
+Production:
+
+https://profitradar-api.onrender.com/api/v1
+
+
+Development:
+
+http://localhost:8000/api/v1
+
 
 ---
 
 # Авторизация
 
-Все защищённые запросы используют JWT.
 
-Пример заголовка:
+Тип:
 
-Authorization: Bearer <access_token>
+JWT Authentication
 
----
 
-# Основные разделы API
+Используется:
 
-## AUTH
+- Access Token
+- Refresh Token
 
-Авторизация пользователя.
 
-Планируемые методы:
+Заголовок запроса:
 
-POST /auth/login
 
-POST /auth/refresh
+Authorization: Bearer TOKEN
 
-POST /auth/logout
-
-GET /auth/me
 
 ---
 
-## USERS
+# Пользовательские методы
 
-Работа с пользователем.
 
-GET /users/me
+## Регистрация пользователя
 
-PATCH /users/me
 
-GET /users/devices
+POST
 
-DELETE /users/device/{id}
+/users/register
 
----
 
-## SUBSCRIPTIONS
+Описание:
 
-Работа с подписками.
+Создание нового пользователя.
 
-GET /subscriptions/status
 
-POST /subscriptions/create
+Request:
 
-POST /subscriptions/cancel
 
-GET /subscriptions/history
-
----
-
-## PAYMENTS
-
-Оплата подписки.
-
-POST /payments/create
-
-POST /payments/webhook
-
-GET /payments/history
-
----
-
-## CALCULATIONS
-
-История расчётов.
-
-GET /calculations
-
-POST /calculations
-
-GET /calculations/{id}
-
-DELETE /calculations/{id}
-
----
-
-## API KEYS
-
-Управление API маркетплейсов.
-
-GET /api-keys
-
-POST /api-keys
-
-PATCH /api-keys/{id}
-
-DELETE /api-keys/{id}
-
----
-
-## MARKETPLACES
-
-Работа с маркетплейсами.
-
-POST /wb/import
-
-POST /ozon/import
-
-GET /marketplaces/status
-
----
-
-## AI
-
-AI-аналитика.
-
-POST /ai/analyze
-
-POST /ai/recommend
-
-POST /ai/forecast
-
----
-
-## NOTIFICATIONS
-
-Уведомления.
-
-GET /notifications
-
-PATCH /notifications/read
-
-DELETE /notifications/{id}
-
----
-
-# Ответы сервера
-
-Успешный ответ:
-
-```json
 {
-  "success": true,
-  "data": {}
+ "email": "user@example.com",
+ "password": "password"
 }
-```
 
-Ошибка:
 
-```json
+Response:
+
+
 {
-  "success": false,
-  "error": "Описание ошибки"
+ "id": "uuid",
+ "email": "user@example.com"
 }
-```
+
 
 ---
 
-# Версионирование
+## Получение профиля
 
-Все API будут иметь версию.
 
-Пример:
+GET
 
-/api/v1/
+/users/me
 
-В будущем:
 
-/api/v2/
+Response:
 
-Это позволит обновлять систему без нарушения совместимости.
 
----
+{
+ "id": "uuid",
+ "telegram_id":123456,
+ "subscription":"PRO"
+}
 
-# Ограничение запросов
-
-Backend использует Rate Limit.
-
-Например:
-
-100 запросов в минуту.
-
-При превышении лимита возвращается ошибка:
-
-HTTP 429 Too Many Requests
 
 ---
 
-# Документация
+# Telegram авторизация
 
-FastAPI автоматически предоставляет:
 
-Swagger UI
+## Авторизация через Telegram
 
-/docs
 
-и
+POST
 
-ReDoc
+/auth/telegram
 
-/redoc
+
+Назначение:
+
+Связывает Telegram аккаунт с пользователем.
+
+
+Request:
+
+
+{
+ "telegram_id":123456,
+ "username":"seller"
+}
+
+
+Response:
+
+
+{
+ "access_token":"JWT",
+ "refresh_token":"JWT"
+}
+
+
+---
+
+# Расчеты прибыли
+
+
+## Создать расчет
+
+
+POST
+
+/calculations
+
+
+Описание:
+
+Создание нового расчета прибыли товара.
+
+
+Request:
+
+
+{
+ "product_name":"Товар",
+ "purchase_price":500,
+ "selling_price":1500,
+ "commission":300,
+ "logistics":150,
+ "advertising":100
+}
+
+
+Response:
+
+
+{
+ "profit":450,
+ "margin":30
+}
+
+
+---
+
+## История расчетов
+
+
+GET
+
+/calculations
+
+
+Описание:
+
+Получение истории пользователя.
+
+
+Response:
+
+
+[
+ {
+  "product_name":"Товар",
+  "profit":450
+ }
+]
+
+
+---
+
+# Подписки
+
+
+## Получить текущую подписку
+
+
+GET
+
+/subscription
+
+
+Response:
+
+
+{
+ "plan":"PRO",
+ "status":"active"
+}
+
+
+---
+
+## Изменить тариф
+
+
+POST
+
+/subscription/change
+
+
+Request:
+
+
+{
+ "plan":"PRO"
+}
+
+
+---
+
+# Платежи
+
+
+## Создание платежа
+
+
+POST
+
+/payments/create
+
+
+Request:
+
+
+{
+ "plan":"PRO"
+}
+
+
+Response:
+
+
+{
+ "payment_url":"https://..."
+}
+
+
+---
+
+# Маркетплейсы
+
+
+## Добавить API ключ
+
+
+POST
+
+/marketplaces/connect
+
+
+Request:
+
+
+{
+ "marketplace":"wildberries",
+ "api_key":"encrypted_key"
+}
+
+
+---
+
+## Получить статус подключения
+
+
+GET
+
+/marketplaces/status
+
+
+Response:
+
+
+{
+ "wildberries":"connected",
+ "ozon":"not_connected"
+}
+
+
+---
+
+# AI аналитика
+
+
+## Получить AI рекомендацию
+
+
+GET
+
+/ai/recommendation
+
+
+Response:
+
+
+{
+ "message":
+ "Увеличьте цену товара на 5%"
+}
+
+
+---
+
+# Уведомления
+
+
+## Получение настроек уведомлений
+
+
+GET
+
+/notifications/settings
+
+
+---
+
+## Изменение настроек
+
+
+POST
+
+/notifications/settings
+
+
+---
+
+# Коды ответов
+
+
+200
+
+Успешный запрос.
+
+
+201
+
+Создан новый объект.
+
+
+400
+
+Ошибка данных.
+
+
+401
+
+Необходима авторизация.
+
+
+403
+
+Недостаточно прав.
+
+
+404
+
+Объект не найден.
+
+
+500
+
+Ошибка сервера.
+
 
 ---
 
 # Безопасность
 
-Backend использует:
+
+API использует:
+
 
 - HTTPS;
 - JWT;
-- проверку прав доступа;
-- валидацию данных;
-- шифрование чувствительной информации;
-- логирование ошибок.
+- шифрование API ключей;
+- ограничение запросов;
+- проверку прав доступа.
+
 
 ---
 
-# Масштабирование
+# Будущие расширения
 
-Архитектура API проектируется таким образом, чтобы в будущем можно было добавить:
 
-- iOS-приложение;
-- Desktop-клиент;
-- интеграции с CRM;
-- партнерский API;
-- публичный API.
+Планируется:
 
-Без изменения существующей структуры.
+
+- WebSocket уведомления;
+- GraphQL API;
+- интеграция 1С;
+- интеграция МойСклад;
+- партнерский API.
+
 
 ---
 
-# Итог
+# Текущее состояние
 
-Backend API является единой точкой взаимодействия всех компонентов ProfitRadar MP.
 
-Любая новая функция сначала реализуется в Backend API и только после этого становится доступной в Telegram-боте, Android-приложении и на сайте.
+Сейчас:
+
+Telegram Bot работает напрямую.
+
+
+Следующий этап:
+
+Создание полноценного Backend API.
+
+
+Цель:
+
+Единый сервер для всей экосистемы ProfitRadar MP.
