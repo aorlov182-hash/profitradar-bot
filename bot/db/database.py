@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -16,9 +17,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
 DATA_DIR = BASE_DIR / "data"
-
 
 # Создаем папку data автоматически
 DATA_DIR.mkdir(
@@ -69,6 +68,7 @@ class Base(DeclarativeBase):
 # GET SESSION
 # ==============================
 
+@asynccontextmanager
 async def get_session():
     async with async_session() as session:
         yield session
