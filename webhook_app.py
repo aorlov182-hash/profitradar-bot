@@ -39,7 +39,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+from bot.config import settings
+
+BOT_TOKEN = settings.bot_token
+WEBHOOK_URL = settings.webhook_url
 
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is missing")
