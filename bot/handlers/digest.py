@@ -14,14 +14,13 @@ async def digest(message: Message):
     if not await check_pro(message.from_user.id):
         await message.answer(
             "🔒 Дайджест прибыли доступен только PRO пользователям.\n\n"
-            "PRO: 990 ₽/месяц\n"
-            "Подключает:\n"
+            "PRO: 990 ₽/месяц\n\n"
+            "В PRO входит:\n"
             "✅ Дайджест прибыли\n"
-            "✅ Алерты\n"
+            "✅ Алерты по марже\n"
             "✅ API маркетплейсов"
         )
         return
-
 
     await message.answer(
         "📬 Ваш PRO дайджест прибыли:\n\n"
