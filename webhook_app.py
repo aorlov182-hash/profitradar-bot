@@ -29,6 +29,7 @@ from bot.middlewares.throttle import ThrottleMiddleware
 from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
+from bot.config import settings
 
 
 logging.basicConfig(
@@ -39,10 +40,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-from bot.config import settings
-
 BOT_TOKEN = settings.bot_token
-WEBHOOK_URL = settings.webhook_url
 
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is missing")
@@ -76,10 +74,9 @@ async def on_startup(bot: Bot):
 
     logger.info("Bot starting...")
 
-    init_db()
+    await init_db()
 
     logger.info("Database initialized")
-
 
     await bot.set_webhook(WEBHOOK_URL)
 
@@ -87,20 +84,19 @@ async def on_startup(bot: Bot):
         f"Webhook set to: {WEBHOOK_URL}"
     )
 
-
     scheduler = setup_scheduler(bot)
     scheduler.start()
 
+    logger.info("Scheduler started")
 
 
 async def on_shutdown(bot: Bot):
 
-    logger.info(
-        "Bot shutting down..."
-    )
+    logger.info("Bot shutting down...")
+
+    await bot.delete_webhook()
 
     await bot.session.close()
-
 
 
 async def main():
@@ -186,10 +182,11 @@ async def main():
         while True:
             await asyncio.sleep(3600)
 
+    except KeyboardInterrupt:
+        pass
+
     finally:
-
         await runner.cleanup()
-
 
 
 if __name__ == "__main__":
