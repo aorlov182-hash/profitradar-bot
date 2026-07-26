@@ -1,11 +1,10 @@
+import asyncio
+import logging
 import sys
 from pathlib import Path
 
-# Добавляем корень проекта в путь
+# Корень проекта
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import asyncio
-import logging
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -14,6 +13,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import settings
+
 from bot.handlers import (
     start,
     calculator,
@@ -27,7 +27,10 @@ from bot.handlers import (
 )
 
 
+# ==========================
 # Логирование
+# ==========================
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -36,7 +39,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Создание бота
+# ==========================
+# Бот
+# ==========================
+
 bot = Bot(
     token=settings.bot_token,
     default=DefaultBotProperties(
@@ -45,12 +51,19 @@ bot = Bot(
 )
 
 
-# Диспетчер
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
+# ==========================
+# Dispatcher
+# ==========================
+
+dp = Dispatcher(
+    storage=MemoryStorage()
+)
 
 
-# Подключение обработчиков
+# ==========================
+# Подключение handlers
+# ==========================
+
 dp.include_router(start.router)
 dp.include_router(calculator.router)
 dp.include_router(api_connect.router)
@@ -60,7 +73,6 @@ dp.include_router(subscription.router)
 dp.include_router(payment.router)
 dp.include_router(admin.router)
 dp.include_router(compare.router)
-
 
 
 # ==========================
@@ -75,7 +87,7 @@ async def app_command(message: types.Message):
         "✅ Оффлайн-калькулятор маржи\n"
         "✅ История расчетов\n"
         "✅ Работает без интернета\n\n"
-        "🔗 <b>Скачать APK (49 МБ):</b>\n"
+        "🔗 <b>Скачать APK:</b>\n"
         "https://github.com/aorlov182-hash/profitradar-bot/releases/download/v1.0.0/ProfitRadar.apk\n\n"
         "💡 <b>Инструкция:</b>\n"
         "https://aorlov182-hash.github.io/profitradar-site/",
@@ -83,9 +95,8 @@ async def app_command(message: types.Message):
     )
 
 
-
 # ==========================
-# Запуск бота
+# Запуск
 # ==========================
 
 async def main():
@@ -93,15 +104,31 @@ async def main():
     logger.info("🚀 Запуск ProfitRadar MP")
 
     try:
+
+        # Убираем webhook перед локальным polling
         await bot.delete_webhook(drop_pending_updates=True)
-await dp.start_polling(bot)
+
         await dp.start_polling(bot)
 
+
+    except Exception as e:
+
+        logger.exception(
+            f"Ошибка запуска бота: {e}"
+        )
+
+
     finally:
+
         await bot.session.close()
-        logger.info("Бот остановлен")
+
+        logger.info(
+            "Бот остановлен"
+        )
 
 
+# ==========================
 
 if __name__ == "__main__":
+
     asyncio.run(main())
