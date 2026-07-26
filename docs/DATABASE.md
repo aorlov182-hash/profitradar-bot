@@ -2,248 +2,685 @@
 
 ## Назначение
 
-В качестве основной базы данных используется PostgreSQL.
+База данных ProfitRadar MP предназначена для хранения информации о пользователях, расчетах прибыли, подписках, платежах и интеграциях с маркетплейсами.
 
-SQLite использовалась только на этапе MVP и локальной разработки.
+Основная база данных проекта:
 
-После перехода на PostgreSQL все новые функции работают только с ней.
+PostgreSQL 15
 
----
-
-# Основные принципы
-
-База данных должна обеспечивать:
-
-- высокую скорость работы;
-- безопасность хранения данных;
-- масштабируемость;
-- поддержку миллионов записей;
-- простоту резервного копирования;
-- удобство миграций через Alembic.
 
 ---
 
-# ORM
+# Общая структура
 
-Для работы с базой используется:
+Основные сущности:
 
-- SQLAlchemy 2.x
-- Alembic
+- users
+- calculations
+- subscriptions
+- payments
+- api_keys
+- devices
 
-SQL-запросы вручную практически не используются.
 
-Вся работа ведётся через ORM.
+Связи:
 
----
-
-# Основные таблицы
-
-## users
-
-Хранение пользователей системы.
-
-Основные поля:
-
-- id
-- telegram_id
-- username
-- first_name
-- last_name
-- language
-- is_admin
-- created_at
-- updated_at
-
----
-
-## subscriptions
-
-Информация о подписках.
-
-Основные поля:
-
-- id
-- user_id
-- plan
-- status
-- started_at
-- expires_at
-- auto_renew
-
----
-
-## payments
-
-История оплат.
-
-Основные поля:
-
-- id
-- user_id
-- provider
-- amount
-- currency
-- status
-- transaction_id
-- created_at
-
----
-
-## api_keys
-
-API Wildberries и Ozon.
-
-Ключи всегда хранятся в зашифрованном виде.
-
-Основные поля:
-
-- id
-- user_id
-- marketplace
-- encrypted_key
-- created_at
-- updated_at
-- is_active
-
----
-
-## calculations
-
-История расчётов прибыли.
-
-Основные поля:
-
-- id
-- user_id
-- marketplace
-- purchase_price
-- selling_price
-- commission
-- logistics
-- advertising
-- taxes
-- profit
-- margin
-- created_at
-
----
-
-## devices
-
-Устройства пользователя.
-
-Используется для синхронизации между Android, Web и Telegram.
-
-Основные поля:
-
-- id
-- user_id
-- platform
-- device_name
-- last_seen
-- created_at
-
----
-
-# Связи
 
 users
 
-↓
+  |
 
-subscriptions
+  ├── calculations
 
-↓
+  |
 
-payments
+  ├── subscriptions
 
-↓
+  |
 
-api_keys
+  ├── payments
 
-↓
+  |
 
-calculations
+  ├── api_keys
 
-↓
+  |
 
-devices
+  └── devices
 
-Каждый пользователь может иметь:
 
-- несколько устройств;
-- несколько оплат;
-- множество расчётов;
-- несколько API-ключей.
+---
+
+# Таблица users
+
+## Назначение
+
+Хранит пользователей системы.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+Описание:
+
+Уникальный идентификатор пользователя.
+
+
+telegram_id
+
+Тип:
+
+BIGINT
+
+Описание:
+
+ID пользователя Telegram.
+
+
+username
+
+Тип:
+
+VARCHAR
+
+Описание:
+
+Имя пользователя Telegram.
+
+
+email
+
+Тип:
+
+VARCHAR
+
+Описание:
+
+Email пользователя.
+
+
+password_hash
+
+Тип:
+
+VARCHAR
+
+Описание:
+
+Хеш пароля (для веб-регистрации).
+
+
+is_active
+
+Тип:
+
+BOOLEAN
+
+Описание:
+
+Активен ли пользователь.
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
+Описание:
+
+Дата создания аккаунта.
+
+
+updated_at
+
+Тип:
+
+TIMESTAMP
+
+Описание:
+
+Дата последнего изменения.
+
+
+---
+
+# Таблица calculations
+
+## Назначение
+
+История расчётов прибыли.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+
+user_id
+
+Тип:
+
+UUID
+
+Связь:
+
+users.id
+
+
+product_name
+
+Тип:
+
+VARCHAR
+
+Название товара.
+
+
+purchase_price
+
+Тип:
+
+DECIMAL
+
+Цена закупки.
+
+
+selling_price
+
+Тип:
+
+DECIMAL
+
+Цена продажи.
+
+
+commission
+
+Тип:
+
+DECIMAL
+
+Комиссия маркетплейса.
+
+
+logistics
+
+Тип:
+
+DECIMAL
+
+Логистика.
+
+
+advertising
+
+Тип:
+
+DECIMAL
+
+Реклама.
+
+
+profit
+
+Тип:
+
+DECIMAL
+
+Итоговая прибыль.
+
+
+margin
+
+Тип:
+
+DECIMAL
+
+Маржинальность.
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
+
+---
+
+# Таблица subscriptions
+
+## Назначение
+
+Хранение подписок пользователей.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+
+user_id
+
+Тип:
+
+UUID
+
+
+plan
+
+Тип:
+
+VARCHAR
+
+
+Возможные значения:
+
+FREE
+
+PRO
+
+
+status
+
+Тип:
+
+VARCHAR
+
+
+Возможные значения:
+
+active
+
+expired
+
+cancelled
+
+
+start_date
+
+Тип:
+
+DATE
+
+
+end_date
+
+Тип:
+
+DATE
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
+
+---
+
+# Таблица payments
+
+## Назначение
+
+История платежей.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+
+user_id
+
+Тип:
+
+UUID
+
+
+amount
+
+Тип:
+
+DECIMAL
+
+
+currency
+
+Тип:
+
+VARCHAR
+
+
+provider
+
+Тип:
+
+VARCHAR
+
+
+Примеры:
+
+ЮKassa
+
+Stripe
+
+Telegram Payments
+
+
+status
+
+Тип:
+
+VARCHAR
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
+
+---
+
+# Таблица api_keys
+
+## Назначение
+
+Хранение ключей доступа к маркетплейсам.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+
+user_id
+
+Тип:
+
+UUID
+
+
+marketplace
+
+Тип:
+
+VARCHAR
+
+
+Значения:
+
+Wildberries
+
+Ozon
+
+
+encrypted_key
+
+Тип:
+
+TEXT
+
+
+Описание:
+
+Зашифрованный API ключ.
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
+
+---
+
+# Таблица devices
+
+## Назначение
+
+Подключенные устройства пользователя.
+
+
+Поля:
+
+
+id
+
+Тип:
+
+UUID
+
+
+user_id
+
+Тип:
+
+UUID
+
+
+device_type
+
+Тип:
+
+VARCHAR
+
+
+Примеры:
+
+Android
+
+Web
+
+
+device_token
+
+Тип:
+
+TEXT
+
+
+Используется для:
+
+Push-уведомлений.
+
+
+created_at
+
+Тип:
+
+TIMESTAMP
+
 
 ---
 
 # Индексы
 
-Для ускорения работы используются индексы:
+Для ускорения работы:
+
 
 users.telegram_id
 
-subscriptions.user_id
+INDEX
 
-payments.user_id
-
-api_keys.user_id
 
 calculations.user_id
 
-devices.user_id
+INDEX
+
+
+subscriptions.user_id
+
+INDEX
+
+
+payments.user_id
+
+INDEX
+
+
+api_keys.user_id
+
+INDEX
+
 
 ---
 
-# Шифрование
+# Безопасность
 
-Конфиденциальные данные никогда не хранятся открытым текстом.
 
-Шифруются:
+Пароли:
 
-- API Wildberries;
-- API Ozon;
-- токены доступа;
-- служебные секреты.
+- никогда не хранятся в открытом виде;
+- используется хеширование.
 
-Используется библиотека cryptography (Fernet).
+
+API ключи маркетплейсов:
+
+- хранятся только в зашифрованном виде;
+- доступ имеет только пользователь.
+
+
+Персональные данные:
+
+- минимально необходимые;
+- защищенное хранение.
+
 
 ---
 
 # Миграции
 
-Изменение структуры базы производится исключительно через Alembic.
 
-Ручное изменение структуры PostgreSQL запрещается.
+Для управления изменениями структуры используется:
 
-Каждое изменение сопровождается отдельной миграцией.
+
+Alembic
+
+
+Пример:
+
+
+Создание новой таблицы
+
+↓
+
+Alembic migration
+
+↓
+
+Применение к PostgreSQL
+
 
 ---
 
-# Резервное копирование
+# Будущие расширения
 
-База данных должна регулярно резервироваться.
 
-Минимальные требования:
+В дальнейшем могут быть добавлены:
 
-- ежедневный Backup;
-- хранение последних 30 копий;
-- возможность полного восстановления.
+
+## products
+
+Каталог товаров пользователя.
+
+
+## sales
+
+Продажи с маркетплейсов.
+
+
+## expenses
+
+Дополнительные расходы.
+
+
+## reports
+
+Сохраненные отчеты.
+
+
+## ai_recommendations
+
+Ответы AI-аналитика.
+
 
 ---
 
-# Будущее развитие
+# Целевая структура базы
 
-Планируется добавление новых таблиц:
 
-- ai_reports
-- notifications
-- audit_logs
-- support_tickets
-- marketplace_statistics
-- competitors
-- recommendations
-- forecasts
+PostgreSQL
 
-Это позволит расширять систему без изменения существующей архитектуры.
+|
+
+├── users
+
+├── products
+
+├── calculations
+
+├── sales
+
+├── expenses
+
+├── subscriptions
+
+├── payments
+
+├── api_keys
+
+├── devices
+
+└── ai_recommendations
+
+
+---
+
+# Текущее состояние
+
+
+Сейчас:
+
+MVP использует простое хранение данных.
+
+
+Следующий этап:
+
+Переход на PostgreSQL + SQLAlchemy + Alembic.
+
+
+Цель:
+
+Получить надежную коммерческую базу данных для SaaS-платформы ProfitRadar MP.
