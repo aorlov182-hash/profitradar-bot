@@ -9,7 +9,15 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from sqlalchemy.orm import DeclarativeBase
-from bot.models.stat import Stat
+
+
+# ==============================
+# BASE MODEL
+# ==============================
+
+class Base(DeclarativeBase):
+    pass
+
 
 # ==============================
 # DATABASE CONFIGURATION
@@ -19,12 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DATA_DIR = BASE_DIR / "data"
 
-# Создаем папку data автоматически
 DATA_DIR.mkdir(
     parents=True,
     exist_ok=True
 )
-
 
 DEFAULT_DB_PATH = DATA_DIR / "bot.db"
 
@@ -57,19 +63,12 @@ async_session = async_sessionmaker(
 
 
 # ==============================
-# BASE MODEL
-# ==============================
-
-class Base(DeclarativeBase):
-    pass
-
-
-# ==============================
 # GET SESSION
 # ==============================
 
 @asynccontextmanager
 async def get_session():
+
     async with async_session() as session:
         yield session
 
@@ -79,13 +78,17 @@ async def get_session():
 # ==============================
 
 async def init_db():
-    """
-    Создание таблиц базы данных
-    """
 
     print(f"Database URL: {DATABASE_URL}")
 
+    # ВАЖНО:
+    # импортируем модели здесь,
+    # после создания Base
+    from bot.models.user import User
+    from bot.models.stat import Stat
+
     async with engine.begin() as conn:
+
         await conn.run_sync(
             Base.metadata.create_all
         )
