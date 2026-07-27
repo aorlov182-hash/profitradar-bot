@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from sqlalchemy.orm import DeclarativeBase
-
+from bot.models.stat import Stat
 
 # ==============================
 # DATABASE CONFIGURATION

@@ -7,11 +7,10 @@ import logging
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
-
 from sqlalchemy import text
 
-from bot.db.database import engine
 from bot.config import settings
+from bot.db.database import async_session
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +18,7 @@ router = Router(name="admin")
 
 
 @router.message(Command("stats"))
-async def cmd_stats(message: Message) -> None:
-    """Показывает статистику бота (только для администратора)."""
+async def cmd_stats(message: Message):
 
     user_id = message.from_user.id
 
@@ -30,123 +28,101 @@ async def cmd_stats(message: Message) -> None:
         admin_id = int(settings.admin_user_id)
 
     except (ValueError, TypeError):
-        logger.error("ADMIN_USER_ID указан неверно")
-        await message.answer("Ошибка конфигурации администратора.")
+        await message.answer("Ошибка конфигурации ADMIN_USER_ID")
         return
 
     if user_id != admin_id:
-        logger.warning(
-            f"Отказано в доступе. user={user_id}, admin={admin_id}"
-        )
-        await message.answer(
-            "Эта команда доступна только администратору."
-        )
+        await message.answer("Эта команда доступна только администратору.")
         return
-
-    logger.info("Запрашиваем статистику...")
 
     try:
 
-        async with engine.connect() as conn:
+        async with async_session() as session:
 
-            # Всего пользователей
-            result = await conn.execute(
-                text(
-                    """
-                    SELECT COUNT(DISTINCT user_id)
-                    FROM stats
-                    """
+            total_users = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        """
+                    )
                 )
-            )
-            total_users = result.scalar() or 0
+            ).scalar() or 0
 
-            # Активные сегодня
-            result = await conn.execute(
-                text(
-                    """
-                    SELECT COUNT(DISTINCT user_id)
-                    FROM stats
-                    WHERE created_at >= date('now','start of day')
-                    """
+            active_today = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        WHERE created_at >= date('now','start of day')
+                        """
+                    )
                 )
-            )
-            active_today = result.scalar() or 0
+            ).scalar() or 0
 
-            # Активные за неделю
-            result = await conn.execute(
-                text(
-                    """
-                    SELECT COUNT(DISTINCT user_id)
-                    FROM stats
-                    WHERE created_at >= date('now','-7 day')
-                    """
+            active_week = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        WHERE created_at >= date('now','-7 days')
+                        """
+                    )
                 )
-            )
-            active_week = result.scalar() or 0
+            ).scalar() or 0
 
-            # Ожидание Pro
-            result = await conn.execute(
-                text(
-                    """
-                    SELECT COUNT(*)
-                    FROM stats
-                    WHERE action='callback:notify_pro'
-                    """
+            top_commands = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT action, COUNT(*) AS count
+                        FROM stats
+                        WHERE action LIKE 'command:%'
+                        GROUP BY action
+                        ORDER BY count DESC
+                        LIMIT 5
+                        """
+                    )
                 )
-            )
-            waitlist_count = result.scalar() or 0
+            ).fetchall()
 
-            # ТОП команд
-            result = await conn.execute(
-                text(
-                    """
-                    SELECT action,
-                           COUNT(*) AS count
-                    FROM stats
-                    WHERE action LIKE 'command:%'
-                    GROUP BY action
-                    ORDER BY count DESC
-                    LIMIT 5
-                    """
+            waitlist_count = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(*)
+                        FROM stats
+                        WHERE action='callback:notify_pro'
+                        """
+                    )
                 )
-            )
-
-            top_commands = result.fetchall()
+            ).scalar() or 0
 
         stats_text = (
             "📊 <b>Статистика ProfitRadar</b>\n\n"
-            f"👥 Всего пользователей: <b>{total_users}</b>\n"
-            f"📅 Активных сегодня: <b>{active_today}</b>\n"
-            f"📆 Активных за неделю: <b>{active_week}</b>\n\n"
-            f"🔔 В списке ожидания Pro: <b>{waitlist_count}</b>\n\n"
-            "<b>Топ команд:</b>\n"
+            f"👥 Пользователей: <b>{total_users}</b>\n"
+            f"📅 Сегодня: <b>{active_today}</b>\n"
+            f"📆 За неделю: <b>{active_week}</b>\n\n"
+            f"💎 Ждут Pro: <b>{waitlist_count}</b>\n\n"
+            "<b>🔥 Топ команд</b>\n"
         )
 
         if top_commands:
-
             for action, count in top_commands:
-
-                command = action.replace(
-                    "command:",
-                    "/"
-                )
-
-                stats_text += (
-                    f"• {command} — {count}\n"
-                )
-
+                command = action.replace("command:", "")
+                stats_text += f"• {command} — {count}\n"
         else:
-
             stats_text += "Пока нет данных."
 
         await message.answer(stats_text)
 
-        logger.info("Статистика успешно отправлена.")
+    except Exception:
 
-    except Exception as e:
-
-        logger.exception(e)
+        logger.exception("Ошибка чтения статистики")
 
         await message.answer(
-            "Произошла ошибка при чтении статистики."
+            "Ошибка при чтении статистики. Проверьте логи Render."
         )
