@@ -1,100 +1,190 @@
 import os
 import asyncio
 import logging
+
 from aiohttp import web
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler,
+    setup_application
+)
 
-from bot.config import settings
-from bot.handlers import start, calculator, compare, api_connect, digest, alerts, subscription, payment, admin
+from bot.handlers import (
+    start,
+    calculator,
+    compare,
+    api_connect,
+    digest,
+    alerts,
+    subscription,
+    payment,
+    admin,
+    app
+)
+
 from bot.middlewares.throttle import ThrottleMiddleware
 from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
+from bot.config import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-7s | %(message)s")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-7s | %(message)s"
+)
+
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+BOT_TOKEN = settings.bot_token
+
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN is missing")
+
+
+WEBHOOK_URL = os.getenv(
+    "WEBHOOK_URL",
+    "https://profitradar-bot.onrender.com/webhook"
+)
+
 PORT = int(os.getenv("PORT", 10000))
 
 
-# --- Marшрут /ping: нужен, чтобы внешний сервис мог будить бота ---
-# (Render Free засыпает без входящих запросов; пинг каждые 10 мин
-#  не даёт сервису «уснуть», поэтому бот отвечает мгновенно.)
-async def handle_ping(request):
-    return web.Response(text="ProfitRadar Bot is alive!", status=200)
+def setup_routers(dp: Dispatcher):
 
-
-def setup_routers(dp: Dispatcher) -> None:
     dp.include_routers(
         start.router,
         calculator.router,
-        compare.router,       # <-- ДОБАВЛЕНО
+        compare.router,
         api_connect.router,
         subscription.router,
         payment.router,
         admin.router,
         digest.router,
         alerts.router,
+        app.router,
     )
 
 
-async def on_startup(bot: Bot) -> None:
+async def on_startup(bot: Bot):
+
     logger.info("Bot starting...")
-    init_db()
+
+    await init_db()
+
     logger.info("Database initialized")
+
     await bot.set_webhook(WEBHOOK_URL)
-    logger.info(f"Webhook set to: {WEBHOOK_URL}")
+
+    logger.info(
+        f"Webhook set to: {WEBHOOK_URL}"
+    )
+
     scheduler = setup_scheduler(bot)
     scheduler.start()
 
+    logger.info("Scheduler started")
 
-async def on_shutdown(bot: Bot) -> None:
+
+async def on_shutdown(bot: Bot):
+
     logger.info("Bot shutting down...")
+
     await bot.delete_webhook()
-    logger.info("Webhook deleted")
+
+    await bot.session.close()
 
 
 async def main():
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    bot = Bot(
+        token=BOT_TOKEN,
+        default=DefaultBotProperties(
+            parse_mode=ParseMode.HTML
+        )
+    )
+
+
     dp = Dispatcher()
 
-    dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
+
+    dp.startup.register(
+        on_startup
+    )
+
+    dp.shutdown.register(
+        on_shutdown
+    )
+
 
     setup_routers(dp)
 
-    dp.message.middleware(ThrottleMiddleware(rate_limit=1.0))
-    dp.message.middleware(AnalyticsMiddleware())
-    dp.callback_query.middleware(AnalyticsMiddleware())
 
-    app = web.Application()
+    dp.message.middleware(
+        ThrottleMiddleware(rate_limit=1.0)
+    )
 
-    # Регистрируем /ping ДО регистрации webhook-обработчика, чтобы
-    # маршрут гарантированно работал и не перекрывался.
-    app.router.add_get("/ping", handle_ping)
+    dp.message.middleware(
+        AnalyticsMiddleware()
+    )
 
-    webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
-    webhook_requests_handler.register(app, path="/webhook")
+    dp.callback_query.middleware(
+        AnalyticsMiddleware()
+    )
 
-    setup_application(app, dp, bot=bot)
 
-    runner = web.AppRunner(app)
+    web_app = web.Application()
+
+
+    webhook_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot
+    )
+
+
+    webhook_handler.register(
+        web_app,
+        path="/webhook"
+    )
+
+
+    setup_application(
+        web_app,
+        dp,
+        bot=bot
+    )
+
+
+    runner = web.AppRunner(web_app)
+
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", PORT)
+
+
+    site = web.TCPSite(
+        runner,
+        "0.0.0.0",
+        PORT
+    )
+
     await site.start()
 
-    logger.info(f"Server started on port {PORT}")
+
+    logger.info(
+        f"Server started on port {PORT}"
+    )
+
 
     try:
         while True:
             await asyncio.sleep(3600)
-    except asyncio.CancelledError:
+
+    except KeyboardInterrupt:
         pass
+
     finally:
         await runner.cleanup()
 
