@@ -1,5 +1,6 @@
 """
 Админ-команды для просмотра статистики.
+SQL-запросы универсальны: работают и на SQLite, и на PostgreSQL.
 """
 
 import logging
@@ -50,25 +51,31 @@ async def cmd_stats(message: Message):
                 )
             ).scalar() or 0
 
+            # Универсальный фильтр "за сегодня":
+            # - PostgreSQL: CURRENT_DATE
+            # - SQLite: date('now')
             active_today = (
                 await session.execute(
                     text(
                         """
                         SELECT COUNT(DISTINCT user_id)
                         FROM stats
-                        WHERE created_at >= date('now','start of day')
+                        WHERE created_at >= CURRENT_DATE
                         """
                     )
                 )
             ).scalar() or 0
 
+            # Универсальный фильтр "за 7 дней":
+            # - PostgreSQL: CURRENT_DATE - INTERVAL '7 days'
+            # - SQLite: date('now', '-7 days')
             active_week = (
                 await session.execute(
                     text(
                         """
                         SELECT COUNT(DISTINCT user_id)
                         FROM stats
-                        WHERE created_at >= date('now','-7 days')
+                        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
                         """
                     )
                 )
