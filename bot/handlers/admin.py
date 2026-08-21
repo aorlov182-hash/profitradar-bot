@@ -1,91 +1,128 @@
 """
 Админ-команды для просмотра статистики.
-Использует синхронный engine + text() (согласовано с bot/db/database.py).
 """
+
 import logging
+
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from sqlalchemy import text
-from bot.db.database import engine
+
 from bot.config import settings
+from bot.db.database import async_session
 
 logger = logging.getLogger(__name__)
+
 router = Router(name="admin")
 
 
 @router.message(Command("stats"))
-async def cmd_stats(message: Message) -> None:
-    """Показывает статистику бота (только для админа)."""
+async def cmd_stats(message: Message):
+
     user_id = message.from_user.id
+
     logger.info(f"Получена команда /stats от пользователя ID: {user_id}")
 
-    # Приводим admin_user_id к числу, чтобы сравнение с user_id работало на 100%
     try:
         admin_id = int(settings.admin_user_id)
+
     except (ValueError, TypeError):
-        logger.error("Ошибка: ADMIN_USER_ID в настройках не является числом!")
-        await message.answer("Ошибка конфигурации админа. Проверьте .env")
+        await message.answer("Ошибка конфигурации ADMIN_USER_ID")
         return
 
     if user_id != admin_id:
-        logger.warning(f"Отказ в доступе: ваш ID ({user_id}) не совпадает с ADMIN_USER_ID ({admin_id})")
         await message.answer("Эта команда доступна только администратору.")
         return
 
-    logger.info("Доступ разрешен. Запрашиваем статистику из БД...")
-
     try:
-        with engine.connect() as conn:
-            # Общее количество уникальных пользователей
-            total_users = conn.execute(text("SELECT COUNT(DISTINCT user_id) FROM stats")).scalar() or 0
 
-            # Активные за сегодня
-            active_today = conn.execute(text("""
-                SELECT COUNT(DISTINCT user_id) FROM stats
-                WHERE created_at >= date('now', 'start of day')
-            """)).scalar() or 0
+        async with async_session() as session:
 
-            # Активные за неделю
-            active_week = conn.execute(text("""
-                SELECT COUNT(DISTINCT user_id) FROM stats
-                WHERE created_at >= date('now', '-7 days')
-            """)).scalar() or 0
+            total_users = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        """
+                    )
+                )
+            ).scalar() or 0
 
-            # Топ команд
-            top_commands = conn.execute(text("""
-                SELECT action, COUNT(*) as count
-                FROM stats
-                WHERE action LIKE 'command:%'
-                GROUP BY action
-                ORDER BY count DESC
-                LIMIT 5
-            """)).fetchall()
+            active_today = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        WHERE created_at >= date('now','start of day')
+                        """
+                    )
+                )
+            ).scalar() or 0
 
-            # Количество нажатий "Напомнить о запуске"
-            waitlist_count = conn.execute(text("""
-                SELECT COUNT(*) FROM stats
-                WHERE action = 'callback:notify_pro'
-            """)).scalar() or 0
+            active_week = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(DISTINCT user_id)
+                        FROM stats
+                        WHERE created_at >= date('now','-7 days')
+                        """
+                    )
+                )
+            ).scalar() or 0
 
-        # Формируем сообщение
-        stats_text = "📊 <b>Статистика бота</b>\n\n"
-        stats_text += f"👥 Всего пользователей: <b>{total_users}</b>\n"
-        stats_text += f"📅 Активных сегодня: <b>{active_today}</b>\n"
-        stats_text += f"📆 Активных за неделю: <b>{active_week}</b>\n\n"
-        stats_text += f"🔔 В списке ожидания Pro: <b>{waitlist_count}</b>\n\n"
-        stats_text += "<b>Топ команд:</b>\n"
+            top_commands = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT action, COUNT(*) AS count
+                        FROM stats
+                        WHERE action LIKE 'command:%'
+                        GROUP BY action
+                        ORDER BY count DESC
+                        LIMIT 5
+                        """
+                    )
+                )
+            ).fetchall()
 
-        if not top_commands:
-            stats_text += "Пока нет данных о командах.\n"
-        else:
+            waitlist_count = (
+                await session.execute(
+                    text(
+                        """
+                        SELECT COUNT(*)
+                        FROM stats
+                        WHERE action='callback:notify_pro'
+                        """
+                    )
+                )
+            ).scalar() or 0
+
+        stats_text = (
+            "📊 <b>Статистика ProfitRadar</b>\n\n"
+            f"👥 Пользователей: <b>{total_users}</b>\n"
+            f"📅 Сегодня: <b>{active_today}</b>\n"
+            f"📆 За неделю: <b>{active_week}</b>\n\n"
+            f"💎 Ждут Pro: <b>{waitlist_count}</b>\n\n"
+            "<b>🔥 Топ команд</b>\n"
+        )
+
+        if top_commands:
             for action, count in top_commands:
                 command = action.replace("command:", "")
-                stats_text += f"• {command}: {count} раз\n"
+                stats_text += f"• {command} — {count}\n"
+        else:
+            stats_text += "Пока нет данных."
 
         await message.answer(stats_text)
-        logger.info("Статистика успешно отправлена пользователю.")
 
-    except Exception as e:
-        logger.error(f"Ошибка при получении статистики из БД: {e}")
-        await message.answer("Произошла ошибка при чтении статистики. Проверьте логи.")
+    except Exception:
+
+        logger.exception("Ошибка чтения статистики")
+
+        await message.answer(
+            "Ошибка при чтении статистики. Проверьте логи Render."
+        )
