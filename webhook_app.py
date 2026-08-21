@@ -54,6 +54,11 @@ WEBHOOK_URL = os.getenv(
 PORT = int(os.getenv("PORT", 10000))
 
 
+# --- Health check /ping: Render проверяет его и внешний мониторинг бурлит ---
+async def handle_ping(request):
+    return web.Response(text="ProfitRadar Bot is alive!", status=200)
+
+
 def setup_routers(dp: Dispatcher):
 
     dp.include_routers(
@@ -108,9 +113,7 @@ async def main():
         )
     )
 
-
     dp = Dispatcher()
-
 
     dp.startup.register(
         on_startup
@@ -120,9 +123,7 @@ async def main():
         on_shutdown
     )
 
-
     setup_routers(dp)
-
 
     dp.message.middleware(
         ThrottleMiddleware(rate_limit=1.0)
@@ -136,21 +137,21 @@ async def main():
         AnalyticsMiddleware()
     )
 
-
     web_app = web.Application()
 
+    # ДОБАВЛЕНО: маршрут /ping — чтобы Render health check проходил
+    # и сервис не «крутился» вечно.
+    web_app.router.add_get("/ping", handle_ping)
 
     webhook_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot
     )
 
-
     webhook_handler.register(
         web_app,
         path="/webhook"
     )
-
 
     setup_application(
         web_app,
@@ -158,11 +159,9 @@ async def main():
         bot=bot
     )
 
-
     runner = web.AppRunner(web_app)
 
     await runner.setup()
-
 
     site = web.TCPSite(
         runner,
@@ -172,11 +171,9 @@ async def main():
 
     await site.start()
 
-
     logger.info(
         f"Server started on port {PORT}"
     )
-
 
     try:
         while True:
