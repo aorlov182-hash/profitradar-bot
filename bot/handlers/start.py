@@ -41,10 +41,10 @@ async def cmd_start(message: Message) -> None:
 async def cmd_help(message: Message) -> None:
     await message.answer(
         "<b>Команды ProfitRadar</b>\n\n"
+        "⚖️ /compare — сравнить, где выгоднее: WB или Ozon (бесплатно)\n"
         "📉 /calc — калькулятор маржи (бесплатно)\n"
         "📦 /pro — тарифы и подключение Pro\n"
         "🔗 /connect — подключить API WB\n"
-        "📈 /status — проверить тариф и API\n"
         "📬 /digest — дайджест прибыли (Pro)\n"
         "🚨 /alerts — алерты по марже (Pro)\n"
         "❌ /cancel — отменить текущий ввод\n\n"
