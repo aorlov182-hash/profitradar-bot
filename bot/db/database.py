@@ -1,14 +1,17 @@
+import logging
 import os
-from pathlib import Path
+import re
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import (
-    create_async_engine,
+    AsyncSession,
     async_sessionmaker,
-    AsyncSession
+    create_async_engine,
 )
-
 from sqlalchemy.orm import DeclarativeBase
+
+logger = logging.getLogger(__name__)
 
 
 # ==============================
@@ -34,32 +37,79 @@ DATA_DIR.mkdir(
 
 DEFAULT_DB_PATH = DATA_DIR / "bot.db"
 
+SQLITE_URL = f"sqlite+aiosqlite:///{DEFAULT_DB_PATH}"
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    f"sqlite+aiosqlite:///{DEFAULT_DB_PATH}"
-)
+
+def _normalize_db_url(raw: str) -> str:
+    """Приводит DATABASE_URL к виду, понятному SQLAlchemy-async.
+
+    - пустая строка -> SQLite (как было изначально);
+    - `postgresql://...` -> `postgresql+asyncpg://...`.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return SQLITE_URL
+    if raw.startswith("postgresql://"):
+        raw = "postgresql+asyncpg://" + raw[len("postgresql://"):]
+    return raw
+
+
+def _mask_db_url(url: str) -> str:
+    """Маскирует пароль в строке подключения (не светим его в логах)."""
+    return re.sub(r"://([^:/@]+):([^@/]+)@", r"://\1:***@", url)
+
+
+DATABASE_URL = _normalize_db_url(os.getenv("DATABASE_URL", ""))
 
 
 # ==============================
-# ENGINE
+# ENGINE (ленивый, с fallback на SQLite)
 # ==============================
 
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False
-)
+_engine = None
+_session_maker = None
 
 
-# ==============================
-# SESSION
-# ==============================
+def get_engine():
+    global _engine
+    if _engine is None:
+        logger.info("DB engine: %s", _mask_db_url(DATABASE_URL))
+        _engine = create_async_engine(DATABASE_URL, echo=False)
+    return _engine
 
-async_session = async_sessionmaker(
-    engine,
-    expire_on_commit=False,
-    class_=AsyncSession
-)
+
+def get_session_maker():
+    global _session_maker
+    if _session_maker is None:
+        _session_maker = async_sessionmaker(
+            get_engine(),
+            expire_on_commit=False,
+            class_=AsyncSession,
+        )
+    return _session_maker
+
+
+def switch_to_sqlite(reason: str) -> None:
+    """Временный fallback на локальную SQLite, если PostgreSQL недоступен."""
+    global _engine, _session_maker
+    logger.warning("PostgreSQL недоступен (%s). Переключаюсь на SQLite.", reason)
+    if _engine is not None:
+        try:
+            _engine.dispose()
+        except Exception:
+            pass
+    _engine = create_async_engine(SQLITE_URL, echo=False)
+    _session_maker = None
+
+
+class _LazySessionFactory:
+    """Совместим с прежним `async_session()`: берёт актуальный engine."""
+
+    def __call__(self, **kw):
+        return get_session_maker()(**kw)
+
+
+async_session = _LazySessionFactory()
 
 
 # ==============================
@@ -68,7 +118,6 @@ async_session = async_sessionmaker(
 
 @asynccontextmanager
 async def get_session():
-
     async with async_session() as session:
         yield session
 
@@ -78,19 +127,19 @@ async def get_session():
 # ==============================
 
 async def init_db():
-
-    print(f"Database URL: {DATABASE_URL}")
-
     # ВАЖНО:
-    # импортируем модели здесь,
-    # после создания Base
-    from bot.models.user import User
-    from bot.models.stat import Stat
+    # импортируем модели здесь, после создания Base
+    from bot.models.user import User  # noqa: F401
+    from bot.models.stat import Stat  # noqa: F401
 
-    async with engine.begin() as conn:
-
-        await conn.run_sync(
-            Base.metadata.create_all
-        )
-
-    print("Database initialized")
+    try:
+        async with get_engine().begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database initialized (URL: %s)", _mask_db_url(DATABASE_URL))
+    except Exception as e:
+        # Если PostgreSQL mёртв/недоступен — не даём боту упасть на старте,
+        # переходим на локальную SQLite (данные аналитики временные).
+        switch_to_sqlite(str(e))
+        async with get_engine().begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database re-initialized on SQLite (temporary fallback)")
