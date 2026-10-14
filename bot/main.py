@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.config import settings
+from bot.utils.commands import set_bot_commands
 
 from bot.handlers import (
     start,
@@ -82,6 +83,9 @@ async def main():
 
     # Удаляем webhook перед polling
     await bot.delete_webhook(drop_pending_updates=True)
+
+    # Регистрируем меню команд (кнопка «/» в поле ввода)
+    await set_bot_commands(bot)
 
 
     try:

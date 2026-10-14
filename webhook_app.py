@@ -30,6 +30,7 @@ from bot.middlewares.analytics import AnalyticsMiddleware
 from bot.db.database import init_db
 from bot.services.scheduler import setup_scheduler
 from bot.config import settings
+from bot.utils.commands import set_bot_commands
 
 
 logging.basicConfig(
@@ -88,6 +89,11 @@ async def on_startup(bot: Bot):
     logger.info(
         f"Webhook set to: {WEBHOOK_URL}"
     )
+
+    # Меню команд (кнопка «/») — /compare, /app и другие
+    await set_bot_commands(bot)
+
+    logger.info("Bot commands registered")
 
     scheduler = setup_scheduler(bot)
     scheduler.start()
