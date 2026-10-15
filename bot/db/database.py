@@ -93,11 +93,8 @@ def switch_to_sqlite(reason: str) -> None:
     """Временный fallback на локальную SQLite, если PostgreSQL недоступен."""
     global _engine, _session_maker
     logger.warning("PostgreSQL недоступен (%s). Переключаюсь на SQLite.", reason)
-    if _engine is not None:
-        try:
-            _engine.dispose()
-        except Exception:
-            pass
+    # Старый engine не диспозим здесь: AsyncEngine.dispose() — корутина,
+    # а при неудачном первом коннекте пул уже ни на что не ссылается.
     _engine = create_async_engine(SQLITE_URL, echo=False)
     _session_maker = None
 
@@ -132,14 +129,20 @@ async def init_db():
     from bot.models.user import User  # noqa: F401
     from bot.models.stat import Stat  # noqa: F401
 
+    # Пробуем инициализировать БД. Если PostgreSQL недоступен (DNS,
+    # соединение, пароль — любая ошибка), переключаемся на локальную SQLite
+    # и продолжаем работу без остановки бота.
     try:
         async with get_engine().begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database initialized (URL: %s)", _mask_db_url(DATABASE_URL))
     except Exception as e:
-        # Если PostgreSQL mёртв/недоступен — не даём боту упасть на старте,
-        # переходим на локальную SQLite (данные аналитики временные).
+        logger.warning("PostgreSQL недоступен (%s). Переключаюсь на SQLite.", e)
         switch_to_sqlite(str(e))
-        async with get_engine().begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database re-initialized on SQLite (temporary fallback)")
+        try:
+            async with get_engine().begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database re-initialized on SQLite (temporary fallback)")
+        except Exception as e2:
+            logger.error("Не удалось инициализировать даже SQLite: %s", e2)
+            raise

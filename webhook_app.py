@@ -80,9 +80,14 @@ async def on_startup(bot: Bot):
 
     logger.info("Bot starting...")
 
-    await init_db()
+    # Инициализация БД не должна ломать запуск бота —
+    # если PostgreSQL недоступен, переключимся на SQLite внутри init_db().
+    try:
+        await init_db()
+    except Exception as e:
+        logger.error("Критическая ошибка init_db: %s. Бот запустится без БД.", e)
 
-    logger.info("Database initialized")
+    logger.info("Database initialization finished")
 
     await bot.set_webhook(WEBHOOK_URL)
 
