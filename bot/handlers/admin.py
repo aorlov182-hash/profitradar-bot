@@ -4,6 +4,7 @@ SQL-запросы универсальны: работают и на SQLite, и
 """
 
 import logging
+from datetime import datetime, timedelta, timezone
 
 from aiogram import Router
 from aiogram.filters import Command
@@ -36,6 +37,11 @@ async def cmd_stats(message: Message):
         await message.answer("Эта команда доступна только администратору.")
         return
 
+    # Даты вычисляем в Python — запрос работает одинаково на SQLite и PostgreSQL
+    now_utc = datetime.now(timezone.utc)
+    today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = today_start - timedelta(days=7)
+
     async def _fetch_stats(session):
         total_users = (
             await session.execute(
@@ -48,33 +54,29 @@ async def cmd_stats(message: Message):
             )
         ).scalar() or 0
 
-        # Универсальный фильтр "за сегодня":
-        # - PostgreSQL: CURRENT_DATE
-        # - SQLite: date('now')
         active_today = (
             await session.execute(
                 text(
                     """
                     SELECT COUNT(DISTINCT user_id)
                     FROM stats
-                    WHERE created_at >= CURRENT_DATE
+                    WHERE created_at >= :today_start
                     """
-                )
+                ),
+                {"today_start": today_start},
             )
         ).scalar() or 0
 
-        # Универсальный фильтр "за 7 дней":
-        # - PostgreSQL: CURRENT_DATE - INTERVAL '7 days'
-        # - SQLite: date('now', '-7 days')
         active_week = (
             await session.execute(
                 text(
                     """
                     SELECT COUNT(DISTINCT user_id)
                     FROM stats
-                    WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+                    WHERE created_at >= :week_ago
                     """
-                )
+                ),
+                {"week_ago": week_ago},
             )
         ).scalar() or 0
 

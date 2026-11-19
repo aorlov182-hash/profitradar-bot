@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.config import settings
+from bot.db.database import init_db
 from bot.utils.commands import set_bot_commands
 
 from bot.handlers import (
@@ -64,6 +65,9 @@ async def main():
 
     dp = Dispatcher()
 
+
+    # Инициализация базы данных (создание таблиц, fallback на SQLite при 필요)
+    await init_db()
 
     setup_routers(dp)
 
