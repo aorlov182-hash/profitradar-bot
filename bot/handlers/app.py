@@ -9,12 +9,12 @@ router = Router(name="app")
 async def app_command(message: Message):
 
     await message.answer(
-        "📱 <b>Скачать приложение ProfitRadar MP</b>\n\n"
+        "📱 <b>Приложение ProfitRadar MP</b>\n\n"
         "✅ Оффлайн-калькулятор маржи\n"
         "✅ История расчетов\n"
         "✅ Работает без интернета\n\n"
-        "🔗 <b>Скачать APK:</b>\n"
-        "https://github.com/aorlov182-hash/profitradar-bot/releases/download/v1.0.0/ProfitRadar.apk\n\n"
+        "🔗 <b>Репозиторий на GitHub:</b>\n"
+        "https://github.com/aorlov182-hash/profitradar-bot\n\n"
         "💡 <b>Сайт:</b>\n"
         "https://aorlov182-hash.github.io/profitradar-site/"
     )
